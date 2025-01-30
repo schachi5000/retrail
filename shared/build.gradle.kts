@@ -2,6 +2,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.jetbrains.compose)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
 }
@@ -30,11 +32,17 @@ kotlin {
             baseName = "shared"
             isStatic = true
         }
+
+        pod("MapLibre", "6.9.0")
     }
-    
+
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            api(compose.runtime)
+            api(compose.foundation)
+            api(compose.material)
+            implementation(compose.components.resources)
+            implementation(libs.maplibre.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
