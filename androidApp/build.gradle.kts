@@ -8,7 +8,7 @@ android {
     namespace = "pro.schacher.gpsrekorder.android"
     compileSdk = 35
     defaultConfig {
-        applicationId = "pro.schacher.gpsrekorder.android"
+        applicationId = "pro.schacher.gpsrekorder"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
