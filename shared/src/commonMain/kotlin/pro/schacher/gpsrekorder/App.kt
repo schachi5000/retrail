@@ -3,7 +3,6 @@ package pro.schacher.gpsrekorder
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -13,24 +12,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
 import dev.sargunv.maplibrecompose.compose.layer.CircleLayer
 import dev.sargunv.maplibrecompose.compose.rememberCameraState
 import dev.sargunv.maplibrecompose.compose.source.rememberGeoJsonSource
 import dev.sargunv.maplibrecompose.core.CameraPosition
 import dev.sargunv.maplibrecompose.expressions.dsl.const
+import gps_rekorder.shared.generated.resources.Res
 import io.github.dellisd.spatialk.geojson.Feature
-import io.github.dellisd.spatialk.geojson.FeatureCollection
 import io.github.dellisd.spatialk.geojson.Point
-import io.github.dellisd.spatialk.geojson.Position
-import kotlinx.serialization.json.JsonObject
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 import pro.schacher.gpsrekorder.model.LatLng
 import pro.schacher.gpsrekorder.model.toPosition
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun App() {
     Box(
@@ -67,6 +64,7 @@ fun App() {
         MaplibreMap(
             modifier = Modifier.fillMaxSize(),
             cameraState = cameraState,
+            //styleUri = Res.getUri("files/style.json")
         ) {
             MapContent(latLng)
         }
