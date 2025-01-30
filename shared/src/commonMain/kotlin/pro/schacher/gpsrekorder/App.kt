@@ -15,10 +15,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
+import dev.sargunv.maplibrecompose.compose.layer.CircleLayer
 import dev.sargunv.maplibrecompose.compose.rememberCameraState
+import dev.sargunv.maplibrecompose.compose.source.rememberGeoJsonSource
 import dev.sargunv.maplibrecompose.core.CameraPosition
+import dev.sargunv.maplibrecompose.expressions.dsl.const
+import io.github.dellisd.spatialk.geojson.Feature
+import io.github.dellisd.spatialk.geojson.FeatureCollection
+import io.github.dellisd.spatialk.geojson.Point
 import io.github.dellisd.spatialk.geojson.Position
+import kotlinx.serialization.json.JsonObject
 import pro.schacher.gpsrekorder.model.LatLng
 import pro.schacher.gpsrekorder.model.toPosition
 
@@ -27,7 +36,7 @@ fun App() {
     Box(
         Modifier.fillMaxSize()
     ) {
-        var latLng by remember {
+        val latLng by remember {
             mutableStateOf(
                 LatLng(
                     52.372661437130255,
@@ -59,8 +68,21 @@ fun App() {
             modifier = Modifier.fillMaxSize(),
             cameraState = cameraState,
         ) {
-            // Add map layers here
-
+            MapContent(latLng)
         }
     }
+}
+
+@Composable
+private fun MapContent(latLng: LatLng) {
+    val locationSource = rememberGeoJsonSource(
+        id = "location-source",
+        data = Feature(Point(latLng.toPosition()))
+    )
+
+    CircleLayer(
+        id = "location-layer",
+        source = locationSource,
+        color = const(Color.Blue)
+    )
 }
