@@ -50,6 +50,7 @@ kotlin {
             implementation(libs.kotlinx.serilization.json)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.viewmodel.compose)
+            implementation("dev.icerock.moko:geo:0.7.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

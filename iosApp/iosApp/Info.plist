@@ -2,12 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key></key>
+	<string></string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-        <string>Location permission request to get weather for your location</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-      <string>Location permission request to get weather for your location</string>
+	<string>Location permission request to get weather for your location</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Location permission request to get weather for your location</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
