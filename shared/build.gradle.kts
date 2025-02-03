@@ -43,6 +43,13 @@ kotlin {
             api(compose.material)
             implementation(compose.components.resources)
             implementation(libs.maplibre.compose)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose.viewmodel)
+            implementation(libs.kermit)
+            implementation(libs.kotlinx.navigation.compose)
+            implementation(libs.kotlinx.serilization.json)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.viewmodel.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

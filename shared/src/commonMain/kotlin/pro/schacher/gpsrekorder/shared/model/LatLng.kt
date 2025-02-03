@@ -1,4 +1,4 @@
-package pro.schacher.gpsrekorder.model
+package pro.schacher.gpsrekorder.shared.model
 
 import io.github.dellisd.spatialk.geojson.Position
 

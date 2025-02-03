@@ -5,6 +5,12 @@ jetbrains-compose = "1.7.3"
 compose = "1.7.7"
 compose-material3 = "1.3.1"
 androidx-activityCompose = "1.10.0"
+kermit = "2.0.5"
+koin = "4.0.0"
+koin-compose = "4.0.0"
+kotlinx-datetime = "0.6.0"
+kotlinx-navigation-compose = "2.7.0-alpha07"
+serialization = "1.7.3"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -15,6 +21,18 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
 maplibre-compose = { module = "dev.sargunv.maplibre-compose:maplibre-compose", version = "0.6.0" }
+
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin-compose" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin-compose" }
+koin-compose-androidx = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
+
+kotlinx-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "kotlinx-viewmodel-compose" }
+kotlinx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "kotlinx-navigation-compose" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-serilization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
