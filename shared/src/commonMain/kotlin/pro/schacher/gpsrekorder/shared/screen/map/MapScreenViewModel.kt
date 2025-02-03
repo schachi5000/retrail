@@ -10,6 +10,7 @@ import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.model.LatLng
 
 class MapScreenViewModel(private val locationDataSource: LocationDataSource) : ViewModel() {
+
     private val _state = MutableStateFlow(State())
 
     val state = _state.asStateFlow()
@@ -25,9 +26,31 @@ class MapScreenViewModel(private val locationDataSource: LocationDataSource) : V
                 }
             }
         }
-
-        this.locationDataSource.startLocationUpdates()
     }
 
-    data class State(val location: LatLng? = null, val path: List<LatLng> = emptyList())
+    fun onStartClick() {
+        if (this.locationDataSource.active) {
+            this.locationDataSource.stopLocationUpdates()
+            this._state.update {
+                it.copy(
+                    path = emptyList(),
+                    active = false
+                )
+            }
+        } else {
+            this.locationDataSource.startLocationUpdates()
+            this._state.update {
+                it.copy(
+                    active = true,
+                    path = listOfNotNull(locationDataSource.location?.latLng)
+                )
+            }
+        }
+    }
+
+    data class State(
+        val location: LatLng? = null,
+        val path: List<LatLng> = emptyList(),
+        val active: Boolean = false
+    )
 }

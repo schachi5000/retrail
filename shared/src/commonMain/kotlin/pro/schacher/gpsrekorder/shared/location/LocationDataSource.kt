@@ -9,6 +9,8 @@ interface LocationDataSource {
 
     val location : Location?
 
+    val active : Boolean
+
     fun startLocationUpdates()
 
     fun stopLocationUpdates()

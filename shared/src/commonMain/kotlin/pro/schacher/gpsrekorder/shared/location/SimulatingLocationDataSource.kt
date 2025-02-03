@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +27,9 @@ class SimulatingLocationDataSource : LocationDataSource {
 
     override val location: Location?
         get() = this.state.value
+
+    override val active: Boolean
+        get() = this.updateJob?.isActive == true
 
     private val rng = Random.Default
 
