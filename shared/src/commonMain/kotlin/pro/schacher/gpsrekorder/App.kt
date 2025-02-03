@@ -64,7 +64,7 @@ fun App() {
         MaplibreMap(
             modifier = Modifier.fillMaxSize(),
             cameraState = cameraState,
-            //styleUri = Res.getUri("files/style.json")
+            styleUri = Res.getUri("files/style.json")
         ) {
             MapContent(latLng)
         }
