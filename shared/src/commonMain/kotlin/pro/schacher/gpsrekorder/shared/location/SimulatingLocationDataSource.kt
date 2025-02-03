@@ -6,9 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import pro.schacher.gpsrekorder.shared.model.LatLng
@@ -16,17 +13,10 @@ import pro.schacher.gpsrekorder.shared.model.Location
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
-class SimulatingLocationDataSource : LocationDataSource {
+class SimulatingLocationDataSource : LocationDataSource() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var updateJob: Job? = null
-
-    private val _state = MutableStateFlow<Location?>(null)
-
-    override val state: StateFlow<Location?> = _state.asStateFlow()
-
-    override val location: Location?
-        get() = this.state.value
 
     override val active: Boolean
         get() = this.updateJob?.isActive == true

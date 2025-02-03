@@ -1,18 +1,22 @@
 package pro.schacher.gpsrekorder.shared.location
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import pro.schacher.gpsrekorder.shared.model.Location
 
-interface LocationDataSource {
+abstract class LocationDataSource {
 
-    val state : StateFlow<Location?>
+    protected val _state = MutableStateFlow<Location?>(null)
 
-    val location : Location?
+    val state = this._state as StateFlow<Location?>
 
-    val active : Boolean
+    val location: Location?
+        get() = this.state.value
 
-    fun startLocationUpdates()
+    abstract val active: Boolean
 
-    fun stopLocationUpdates()
+    abstract fun startLocationUpdates()
+
+    abstract fun stopLocationUpdates()
 }
 

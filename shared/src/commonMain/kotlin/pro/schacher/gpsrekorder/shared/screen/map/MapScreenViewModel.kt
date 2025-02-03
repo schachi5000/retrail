@@ -21,25 +21,32 @@ class MapScreenViewModel(private val locationDataSource: LocationDataSource) : V
                 _state.update {
                     it.copy(
                         location = location?.latLng,
-                        path = it.path + listOfNotNull(location?.latLng)
+                        path = if (_state.value.active) {
+                            it.path + listOfNotNull(location?.latLng)
+                        } else {
+                            it.path
+                        }
                     )
                 }
             }
         }
+
+        this.locationDataSource.startLocationUpdates()
     }
 
-    fun onStartClick() {
-        if (this.locationDataSource.active) {
-            this.locationDataSource.stopLocationUpdates()
-            this._state.update {
+    override fun onCleared() {
+        super.onCleared()
+        this.locationDataSource.stopLocationUpdates()
+    }
+
+    fun onRecordClick() {
+        this._state.update {
+            if (it.active) {
                 it.copy(
-                    path = emptyList(),
-                    active = false
+                    active = false,
+                    path = emptyList()
                 )
-            }
-        } else {
-            this.locationDataSource.startLocationUpdates()
-            this._state.update {
+            } else {
                 it.copy(
                     active = true,
                     path = listOfNotNull(locationDataSource.location?.latLng)

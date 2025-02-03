@@ -1,6 +1,7 @@
 package pro.schacher.gpsrekorder.shared.screen.map
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -9,20 +10,18 @@ import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
-import co.touchlab.kermit.Logger
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
 import dev.sargunv.maplibrecompose.compose.layer.CircleLayer
 import dev.sargunv.maplibrecompose.compose.layer.LineLayer
@@ -31,17 +30,25 @@ import dev.sargunv.maplibrecompose.compose.source.rememberGeoJsonSource
 import dev.sargunv.maplibrecompose.core.CameraPosition
 import dev.sargunv.maplibrecompose.core.OrnamentSettings
 import dev.sargunv.maplibrecompose.expressions.dsl.const
+import dev.sargunv.maplibrecompose.expressions.dsl.exponential
+import dev.sargunv.maplibrecompose.expressions.dsl.interpolate
+import dev.sargunv.maplibrecompose.expressions.dsl.linear
+import dev.sargunv.maplibrecompose.expressions.dsl.zoom
+import dev.sargunv.maplibrecompose.expressions.value.CirclePitchAlignment
 import dev.sargunv.maplibrecompose.expressions.value.LineCap
+import dev.sargunv.maplibrecompose.expressions.value.TranslateAnchor
 import gps_rekorder.shared.generated.resources.Res
 import io.github.dellisd.spatialk.geojson.Feature
 import io.github.dellisd.spatialk.geojson.FeatureCollection
 import io.github.dellisd.spatialk.geojson.LineString
 import io.github.dellisd.spatialk.geojson.Point
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.toPosition
 import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
+import kotlin.time.Duration.Companion.milliseconds
 
 
 private const val STYLE_URL = "files/style.json"
@@ -56,7 +63,7 @@ fun MapScreen(
     MapScreen(
         modifier = modifier,
         state = state.value,
-        onStartClick = viewModel::onStartClick
+        onStartClick = viewModel::onRecordClick
     )
 }
 
@@ -95,24 +102,53 @@ fun MapScreen(
             MapContent(state.location, state.path)
         }
 
-        FloatingActionButton(
-            onClick = onStartClick,
-            shape = RoundedCornerShape(16.dp),
+        val scope = rememberCoroutineScope()
+
+        Column(
             modifier = Modifier
                 .navigationBarsPadding()
                 .padding(16.dp)
                 .align(Alignment.BottomEnd)
         ) {
-            if (state.active) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                    contentDescription = "Stop"
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Start"
-                )
+            state.location?.let {
+                FloatingActionButton(
+                    onClick = {
+                        scope.launch {
+                            cameraState.animateTo(
+                                CameraPosition(
+                                    target = it.toPosition(),
+                                    zoom = 15.0
+                                ),
+                                duration = 1000.milliseconds
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Place,
+                        contentDescription = "Stop"
+                    )
+                }
+            }
+
+            FloatingActionButton(
+                modifier = Modifier.padding(top = 16.dp),
+                onClick = onStartClick,
+                shape = RoundedCornerShape(16.dp),
+
+                ) {
+                if (state.active) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Stop"
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Start"
+                    )
+                }
             }
         }
     }
@@ -142,7 +178,8 @@ fun LocationLayer(latLng: LatLng?) {
         color = const(locationColor),
         radius = const(6.dp),
         strokeColor = const(strokeColor),
-        strokeWidth = const(1.5.dp)
+        strokeWidth = const(1.5.dp),
+        pitchAlignment = const(CirclePitchAlignment.Map),
     )
 
     val locationFeature = latLng?.toPosition()?.let {
@@ -165,15 +202,23 @@ fun PathLayer(path: List<LatLng>) {
         id = "path-line-layer",
         source = pathSource,
         color = const(strokeColor),
-        width = const(3.dp),
+        width = interpolate(
+            type = linear(),
+            input = zoom(),
+            7 to const(2.dp),
+            15 to const(4.dp),
+        ),
         cap = const(LineCap.Round),
     )
 
     CircleLayer(
         id = "path-dot-layer",
         source = pathSource,
-        color = const(strokeColor),
+        color = const(locationColor),
         radius = const(4.dp),
+        strokeColor = const(strokeColor),
+        strokeWidth = const(1.5.dp),
+        pitchAlignment = const(CirclePitchAlignment.Map),
         minZoom = 15f
     )
 
