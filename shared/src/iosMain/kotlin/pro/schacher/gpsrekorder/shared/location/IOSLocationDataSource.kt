@@ -1,5 +1,6 @@
 package pro.schacher.gpsrekorder.shared.location
 
+import co.touchlab.kermit.Logger
 import dev.icerock.moko.geo.ExtendedLocation
 import dev.icerock.moko.geo.LocationTracker
 import dev.icerock.moko.permissions.Permission
@@ -10,6 +11,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import platform.CoreLocation.kCLLocationAccuracyBest
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
@@ -31,16 +33,21 @@ class IOSLocationDataSource : LocationDataSource() {
     override val active: Boolean
         get() = this.updateJob?.isActive ?: false
 
-    init {
-        this.scope.launch {
-            requestLocationPermission()
+    override fun hasLocationPermission(): Boolean = runBlocking {
+        try {
+            locationTracker.permissionsController.isPermissionGranted(Permission.LOCATION)
+        } catch (e: Exception) {
+            Logger.e(e) { "Failed to check location permission" }
+            false
         }
     }
 
-    private suspend fun requestLocationPermission() {
-        if (!this.locationTracker.permissionsController.isPermissionGranted(Permission.LOCATION)) {
-            this.locationTracker.permissionsController.providePermission(Permission.LOCATION)
+    override suspend fun requestLocationPermission(): Boolean {
+        if (!locationTracker.permissionsController.isPermissionGranted(Permission.LOCATION)) {
+            locationTracker.permissionsController.providePermission(Permission.LOCATION)
         }
+
+        return this.hasLocationPermission()
     }
 
     override fun startLocationUpdates() {
@@ -62,8 +69,8 @@ class IOSLocationDataSource : LocationDataSource() {
 
 private fun ExtendedLocation.toLocation(): Location = Location(
     latLng = LatLng(this.location.coordinates.latitude, this.location.coordinates.longitude),
-    accuracy = this.location.coordinatesAccuracyMeters.meters,
-    altitude = this.altitude.altitudeMeters.meters,
-    speed = this.speed.speedMps.ms,
-    heading = this.azimuth.azimuthDegrees,
+    accuracy = this.location.coordinatesAccuracyMeters.takeIf { it >= 0.0 }?.meters,
+    altitude = this.altitude.altitudeMeters.takeIf { it >= 0.0 }?.meters,
+    speed = this.speed.speedMps.takeIf { it >= 0.0 }?.ms,
+    heading = this.azimuth.azimuthDegrees.takeIf { it >= 0.0 },
 )

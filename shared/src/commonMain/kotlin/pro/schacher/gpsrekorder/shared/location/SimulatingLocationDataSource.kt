@@ -60,4 +60,8 @@ class SimulatingLocationDataSource : LocationDataSource() {
         Logger.d { "Stopping location updates" }
         this.updateJob?.cancel()
     }
+
+    override fun hasLocationPermission(): Boolean = true
+
+    override suspend fun requestLocationPermission(): Boolean = true
 }

@@ -18,5 +18,9 @@ abstract class LocationDataSource {
     abstract fun startLocationUpdates()
 
     abstract fun stopLocationUpdates()
+
+    abstract fun hasLocationPermission(): Boolean
+
+    abstract suspend fun requestLocationPermission() : Boolean
 }
 

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.model.LatLng
+import pro.schacher.gpsrekorder.shared.model.Location
 
 class MapScreenViewModel(private val locationDataSource: LocationDataSource) : ViewModel() {
 
@@ -17,21 +18,34 @@ class MapScreenViewModel(private val locationDataSource: LocationDataSource) : V
 
     init {
         this.viewModelScope.launch {
-            locationDataSource.state.collect { location ->
-                _state.update {
-                    it.copy(
-                        location = location?.latLng,
-                        path = if (_state.value.active) {
-                            it.path + listOfNotNull(location?.latLng)
-                        } else {
-                            it.path
-                        }
-                    )
-                }
+            locationDataSource.state.collect {
+                onLocationUpdated(it)
             }
         }
 
-        this.locationDataSource.startLocationUpdates()
+        this.viewModelScope.launch {
+            if (locationDataSource.hasLocationPermission()) {
+                locationDataSource.startLocationUpdates()
+            } else {
+                val granted = locationDataSource.requestLocationPermission()
+                if (granted) {
+                    locationDataSource.startLocationUpdates()
+                }
+            }
+        }
+    }
+
+    private fun onLocationUpdated(location: Location?) {
+        _state.update {
+            it.copy(
+                location = location?.latLng,
+                path = if (_state.value.active) {
+                    it.path + listOfNotNull(location?.latLng)
+                } else {
+                    it.path
+                }
+            )
+        }
     }
 
     override fun onCleared() {
