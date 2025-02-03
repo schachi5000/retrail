@@ -323,6 +323,23 @@
       }
     },
     {
+      "id": "road_minor_outline",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "minzoom": 13,
+      "filter": [
+        "all",
+        ["==", "$type", "LineString"],
+        ["in", "class", "minor", "service"]
+      ],
+      "layout": {"line-cap": "round", "line-join": "round"},
+      "paint": {
+        "line-width": {"base": 1.55, "stops": [[4, 0.5], [20, 25]]},
+        "line-color": "#050505"
+      }
+    },
+    {
       "id": "road_minor",
       "type": "line",
       "source": "openmaptiles",
@@ -336,7 +353,7 @@
       "layout": {"line-cap": "round", "line-join": "round"},
       "paint": {
         "line-color": "rgb(42, 42, 42)",
-        "line-width": {"base": 1.55, "stops": [[4, 0.25], [20, 30]]}
+        "line-width": {"base": 1.55, "stops": [[4, 0.2], [20, 20]]}
       }
     },
     {
@@ -454,6 +471,23 @@
       "paint": {
         "line-color": "rgb(50, 50, 50)",
         "line-width": {"base": 1.4, "stops": [[6, 0.5], [20, 30]]}
+      }
+    },
+    {
+      "id": "road_secondary_tertiary_outline",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "minzoom": 11,
+      "filter": [
+        "all",
+        ["==", "$type", "LineString"],
+        ["in", "class", "secondary", "tertiary"]
+      ],
+      "layout": {"line-cap": "round", "line-join": "round"},
+      "paint": {
+        "line-color": "#080808",
+        "line-width": {"base": 1.4, "stops": [[6, 1], [20, 25]]}
       }
     },
     {
