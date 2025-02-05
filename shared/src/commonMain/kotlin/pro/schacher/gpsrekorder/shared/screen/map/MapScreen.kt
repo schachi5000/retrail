@@ -2,41 +2,44 @@ package pro.schacher.gpsrekorder.shared.screen.map
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dev.sargunv.maplibrecompose.compose.ClickResult
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
 import dev.sargunv.maplibrecompose.compose.layer.CircleLayer
 import dev.sargunv.maplibrecompose.compose.layer.LineLayer
 import dev.sargunv.maplibrecompose.compose.rememberCameraState
 import dev.sargunv.maplibrecompose.compose.source.rememberGeoJsonSource
+import dev.sargunv.maplibrecompose.core.CameraMoveReason
 import dev.sargunv.maplibrecompose.core.CameraPosition
 import dev.sargunv.maplibrecompose.core.OrnamentSettings
 import dev.sargunv.maplibrecompose.expressions.dsl.const
-import dev.sargunv.maplibrecompose.expressions.dsl.exponential
 import dev.sargunv.maplibrecompose.expressions.dsl.interpolate
 import dev.sargunv.maplibrecompose.expressions.dsl.linear
 import dev.sargunv.maplibrecompose.expressions.dsl.zoom
 import dev.sargunv.maplibrecompose.expressions.value.CirclePitchAlignment
 import dev.sargunv.maplibrecompose.expressions.value.LineCap
-import dev.sargunv.maplibrecompose.expressions.value.TranslateAnchor
 import gps_rekorder.shared.generated.resources.Res
 import io.github.dellisd.spatialk.geojson.Feature
 import io.github.dellisd.spatialk.geojson.FeatureCollection
@@ -47,8 +50,9 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.toPosition
+import pro.schacher.gpsrekorder.shared.repository.Session
 import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 
 private const val STYLE_URL = "files/style.json"
@@ -63,46 +67,48 @@ fun MapScreen(
     MapScreen(
         modifier = modifier,
         state = state.value,
-        onStartClick = viewModel::onRecordClick
+        onStartClick = viewModel::onRecordClick,
+        onLocationButtonClick = viewModel::onLocationButtonClicked,
+        omMapGesture = viewModel::onMapMoved,
+        onSessionClick = viewModel::onSessionClicked
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalResourceApi::class, ExperimentalLayoutApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     state: State,
-    onStartClick: () -> Unit
+    onStartClick: () -> Unit,
+    onLocationButtonClick: () -> Unit,
+    onSessionClick: (String) -> Unit,
+    omMapGesture: () -> Unit
 ) {
     Box(
         modifier.fillMaxSize()
     ) {
-        val latLng by remember {
-            mutableStateOf(
-                LatLng(52.372661437130255, 9.739450741409224)
-            )
-        }
-
-        val cameraState = rememberCameraState(
-            firstPosition = CameraPosition(
-                target = latLng.toPosition(),
-                zoom = 15.0
-            ),
+        Map(
+            state = state,
+            styleUrl = Res.getUri(STYLE_URL),
+            onMapGesture = omMapGesture,
+            onSessionClick = onSessionClick
         )
 
-        MaplibreMap(
-            modifier = Modifier.fillMaxSize(),
-            ornamentSettings = OrnamentSettings(
-                isLogoEnabled = false,
-                isScaleBarEnabled = false
-            ),
-            cameraState = cameraState,
-            styleUri = Res.getUri(STYLE_URL)
-        ) {
-            MapContent(state.location, state.path)
-        }
+        if (state.activeSession != null) {
 
-        val scope = rememberCoroutineScope()
+            Card(
+                modifier = Modifier.statusBarsPadding().padding(16.dp).align(Alignment.TopCenter),
+                shape = RoundedCornerShape(16.dp),
+                backgroundColor = Color.Black
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text(
+                        "Points: ${state.activeSession.path.size}",
+                        color = Color.White,
+                    )
+                }
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -112,17 +118,7 @@ fun MapScreen(
         ) {
             state.location?.let {
                 FloatingActionButton(
-                    onClick = {
-                        scope.launch {
-                            cameraState.animateTo(
-                                CameraPosition(
-                                    target = it.toPosition(),
-                                    zoom = 15.0
-                                ),
-                                duration = 1000.milliseconds
-                            )
-                        }
-                    },
+                    onClick = onLocationButtonClick,
                     shape = RoundedCornerShape(16.dp),
                 ) {
                     Icon(
@@ -138,7 +134,7 @@ fun MapScreen(
                 shape = RoundedCornerShape(16.dp),
 
                 ) {
-                if (state.active) {
+                if (state.recording) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
                         contentDescription = "Stop"
@@ -155,13 +151,62 @@ fun MapScreen(
 }
 
 @Composable
-private fun MapContent(latLng: LatLng?, path: List<LatLng>) {
-    PathLayer(path)
-    LocationLayer(latLng)
+private fun Map(
+    state: State,
+    styleUrl: String,
+    onMapGesture: () -> Unit = {},
+    onSessionClick: (String) -> Unit
+) {
+    val scope = rememberCoroutineScope()
+
+    val cameraState = rememberCameraState(
+        firstPosition = CameraPosition(
+            target = state.initialCameraPosition.toPosition(),
+            zoom = 15.0
+        ),
+    )
+
+    LaunchedEffect(cameraState.moveReason) {
+        if (cameraState.moveReason == CameraMoveReason.GESTURE) {
+            onMapGesture()
+        }
+    }
+    if (state.cameraTrackingActive) {
+        scope.launch {
+            val position = state.location?.toPosition() ?: return@launch
+            cameraState.animateTo(
+                CameraPosition(
+                    target = position,
+                    zoom = 15.0,
+                    bearing = 0.0
+                ),
+                duration = 2.seconds
+            )
+        }
+
+    }
+    MaplibreMap(
+        modifier = Modifier.fillMaxSize(),
+        ornamentSettings = OrnamentSettings(
+            isLogoEnabled = false,
+            isScaleBarEnabled = false
+        ),
+        cameraState = cameraState,
+        styleUri = styleUrl
+    ) {
+        MapContent(state, onSessionClick)
+    }
 }
 
-private val locationColor = Color(0xFF00DDFF)
-private val strokeColor = Color(0XFF008D9B)
+@Composable
+private fun MapContent(state: State, onSessionClick: (String) -> Unit) {
+    SessionLayer(state.allSessions, onSessionClick)
+    RecordingLayer(state.path)
+    LocationLayer(state.location)
+}
+
+private val recordingLocationColor = Color(0xFFff0e3f)
+private val recordingStrokeColor = Color(0XFFdc002d)
 
 @Composable
 fun LocationLayer(latLng: LatLng?) {
@@ -175,9 +220,9 @@ fun LocationLayer(latLng: LatLng?) {
     CircleLayer(
         id = "location-layer",
         source = locationSource,
-        color = const(locationColor),
+        color = const(recordingLocationColor),
         radius = const(6.dp),
-        strokeColor = const(strokeColor),
+        strokeColor = const(recordingStrokeColor),
         strokeWidth = const(1.5.dp),
         pitchAlignment = const(CirclePitchAlignment.Map),
     )
@@ -192,7 +237,7 @@ fun LocationLayer(latLng: LatLng?) {
 }
 
 @Composable
-fun PathLayer(path: List<LatLng>) {
+fun RecordingLayer(path: List<LatLng>) {
     val pathSource = rememberGeoJsonSource(
         id = "path",
         data = FeatureCollection(features = emptyList())
@@ -201,7 +246,7 @@ fun PathLayer(path: List<LatLng>) {
     LineLayer(
         id = "path-line-layer",
         source = pathSource,
-        color = const(strokeColor),
+        color = const(recordingStrokeColor),
         width = interpolate(
             type = linear(),
             input = zoom(),
@@ -214,9 +259,9 @@ fun PathLayer(path: List<LatLng>) {
     CircleLayer(
         id = "path-dot-layer",
         source = pathSource,
-        color = const(locationColor),
+        color = const(recordingLocationColor),
         radius = const(4.dp),
-        strokeColor = const(strokeColor),
+        strokeColor = const(recordingStrokeColor),
         strokeWidth = const(1.5.dp),
         pitchAlignment = const(CirclePitchAlignment.Map),
         minZoom = 15f
@@ -229,6 +274,63 @@ fun PathLayer(path: List<LatLng>) {
                 listOf(Feature(LineString(positions))) + positions.map { Feature(Point(it)) }
             } else {
                 emptyList()
+            }
+        )
+    )
+}
+
+private val sessionLocationColor = Color(0xFF00DDFF)
+private val sessionStrokeColor = Color(0XFF008D9B)
+
+@Composable
+fun SessionLayer(sessions: List<Session>, onSessionClick: (String) -> Unit) {
+    val pathSource = rememberGeoJsonSource(
+        id = "sessions",
+        data = FeatureCollection(features = emptyList())
+    )
+
+    val featureClickHandler = { it: List<Feature> ->
+        it.find { it.properties.containsKey("sessionId") }
+            ?.getStringProperty("sessionId")
+            ?.let {
+                onSessionClick(it)
+                ClickResult.Consume
+            }
+            ?: ClickResult.Pass
+    }
+
+    LineLayer(
+        id = "session-line-layer",
+        source = pathSource,
+        color = const(sessionStrokeColor),
+        width = interpolate(
+            type = linear(),
+            input = zoom(),
+            7 to const(2.dp),
+            15 to const(4.dp),
+        ),
+        cap = const(LineCap.Round),
+        onClick = featureClickHandler
+    )
+
+    CircleLayer(
+        id = "session-dot-layer",
+        source = pathSource,
+        color = const(sessionLocationColor),
+        radius = const(4.dp),
+        strokeColor = const(sessionStrokeColor),
+        strokeWidth = const(1.5.dp),
+        pitchAlignment = const(CirclePitchAlignment.Map),
+        minZoom = 15f,
+        onClick = featureClickHandler
+    )
+
+    pathSource.setData(
+        FeatureCollection(
+            sessions.map { session ->
+                Feature(LineString(session.path.map { it.toPosition() })).also {
+                    it.setStringProperty("sessionId", session.id)
+                }
             }
         )
     )

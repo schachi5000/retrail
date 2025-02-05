@@ -9,8 +9,13 @@ import kotlinx.coroutines.launch
 import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
+import pro.schacher.gpsrekorder.shared.repository.Session
+import pro.schacher.gpsrekorder.shared.repository.SessionRepository
 
-class MapScreenViewModel(private val locationDataSource: LocationDataSource) : ViewModel() {
+class MapScreenViewModel(
+    private val sessionRepository: SessionRepository,
+    private val locationDataSource: LocationDataSource,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(State())
 
@@ -20,6 +25,22 @@ class MapScreenViewModel(private val locationDataSource: LocationDataSource) : V
         this.viewModelScope.launch {
             locationDataSource.state.collect {
                 onLocationUpdated(it)
+            }
+        }
+
+        this.viewModelScope.launch {
+            sessionRepository.activeSession.collect { session ->
+                _state.update {
+                    it.copy(activeSession = session)
+                }
+            }
+        }
+
+        this.viewModelScope.launch {
+            sessionRepository.allSessions.collect { sessions ->
+                _state.update {
+                    it.copy(allSessions = sessions)
+                }
             }
         }
 
@@ -37,41 +58,62 @@ class MapScreenViewModel(private val locationDataSource: LocationDataSource) : V
 
     private fun onLocationUpdated(location: Location?) {
         _state.update {
-            it.copy(
-                location = location?.latLng,
-                path = if (_state.value.active) {
-                    it.path + listOfNotNull(location?.latLng)
-                } else {
-                    it.path
-                }
-            )
+            it.copy(location = location?.latLng)
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        this.locationDataSource.stopLocationUpdates()
+        if (!this.sessionRepository.recording) {
+            this.locationDataSource.stopLocationUpdates()
+        }
     }
 
     fun onRecordClick() {
-        this._state.update {
-            if (it.active) {
-                it.copy(
-                    active = false,
-                    path = emptyList()
-                )
-            } else {
-                it.copy(
-                    active = true,
-                    path = listOfNotNull(locationDataSource.location?.latLng)
-                )
+        if (this.sessionRepository.recording) {
+            this.sessionRepository.saveRecording()
+        } else {
+            this.sessionRepository.startRecording()
+        }
+    }
+
+    fun onLocationButtonClicked() {
+        _state.update {
+            it.copy(cameraTrackingActive = true)
+        }
+    }
+
+    fun onMapMoved() {
+        _state.update {
+            it.copy(cameraTrackingActive = false)
+        }
+    }
+
+    fun onSessionClicked(sessionId: String) {
+        if (_state.value.recording) {
+            return
+        }
+
+        val session = this.sessionRepository.allSessions.value.find { it.id == sessionId }
+        if (session != null) {
+            _state.update {
+                it.copy(activeSession = session)
             }
         }
     }
 
     data class State(
         val location: LatLng? = null,
-        val path: List<LatLng> = emptyList(),
-        val active: Boolean = false
-    )
+        val activeSession: Session? = null,
+        val allSessions: List<Session> = emptyList(),
+        val initialCameraPosition: LatLng = LatLng(52.372661, 9.739450),
+        val cameraTrackingActive: Boolean = true
+    ) {
+
+        val recording: Boolean
+            get() = this.activeSession != null
+
+        val path: List<LatLng>
+            get() = this.activeSession?.path ?: emptyList()
+    }
 }
