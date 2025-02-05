@@ -31,12 +31,14 @@ class IOSLocationDataSource : LocationDataSource() {
 
     private val locationTracker = LocationTracker(PermissionsController(), kCLLocationAccuracyBest)
 
+    private val permissionsController = this.locationTracker.permissionsController
+
     override val active: Boolean
         get() = this.updateJob?.isActive ?: false
 
     override fun hasLocationPermission(): Boolean = runBlocking {
         try {
-            locationTracker.permissionsController.isPermissionGranted(Permission.LOCATION)
+            permissionsController.isPermissionGranted(Permission.LOCATION)
         } catch (e: Exception) {
             Logger.e(e) { "Failed to check location permission" }
             false
@@ -44,8 +46,8 @@ class IOSLocationDataSource : LocationDataSource() {
     }
 
     override suspend fun requestLocationPermission(): Boolean {
-        if (!locationTracker.permissionsController.isPermissionGranted(Permission.LOCATION)) {
-            locationTracker.permissionsController.providePermission(Permission.LOCATION)
+        if (!this.permissionsController.isPermissionGranted(Permission.LOCATION)) {
+            this.permissionsController.providePermission(Permission.LOCATION)
         }
 
         return this.hasLocationPermission()
