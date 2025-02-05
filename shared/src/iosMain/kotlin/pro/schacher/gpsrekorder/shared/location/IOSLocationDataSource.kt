@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import platform.CoreLocation.kCLLocationAccuracyBest
+import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.meters
@@ -51,6 +52,7 @@ class IOSLocationDataSource : LocationDataSource() {
     }
 
     override fun startLocationUpdates() {
+        AppLogger.d { "Starting location updates" }
         this.updateJob = scope.launch {
             locationTracker.startTracking()
             locationTracker.getExtendedLocationsFlow().collect { extendedLocation ->
@@ -62,6 +64,7 @@ class IOSLocationDataSource : LocationDataSource() {
     }
 
     override fun stopLocationUpdates() {
+        AppLogger.d { "Stopping location updates" }
         this.updateJob?.cancel()
         this.locationTracker.stopTracking()
     }
