@@ -2,14 +2,13 @@ package pro.schacher.gpsrekorder.shared.screen.map
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
 import androidx.compose.material.Card
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
@@ -55,8 +54,10 @@ import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
 import kotlin.time.Duration.Companion.seconds
 
 
-private const val STYLE_URL = "files/style.json"
+private const val STYLE_DARK_URL = "files/styles/ark.json"
+private const val STYLE_LIGHT_URL = "files/styles/light.json"
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
@@ -67,21 +68,24 @@ fun MapScreen(
     MapScreen(
         modifier = modifier,
         state = state.value,
+        styleUrl = Res.getUri(STYLE_LIGHT_URL),
         onStartClick = viewModel::onRecordClick,
         onLocationButtonClick = viewModel::onLocationButtonClicked,
         omMapGesture = viewModel::onMapMoved,
-        onSessionClick = viewModel::onSessionClicked
+        onSessionClick = viewModel::onSessionClicked,
+        onCloseSessionClick = viewModel::onCloseSessionClicked
     )
 }
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalLayoutApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     state: State,
+    styleUrl: String,
     onStartClick: () -> Unit,
     onLocationButtonClick: () -> Unit,
     onSessionClick: (String) -> Unit,
+    onCloseSessionClick: () -> Unit,
     omMapGesture: () -> Unit
 ) {
     Box(
@@ -89,12 +93,12 @@ fun MapScreen(
     ) {
         Map(
             state = state,
-            styleUrl = Res.getUri(STYLE_URL),
+            styleUrl = styleUrl,
             onMapGesture = omMapGesture,
             onSessionClick = onSessionClick
         )
 
-        if (state.activeSession != null) {
+        if (state.selectedSession != null) {
 
             Card(
                 modifier = Modifier.statusBarsPadding().padding(16.dp).align(Alignment.TopCenter),
@@ -103,9 +107,21 @@ fun MapScreen(
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     Text(
-                        "Points: ${state.activeSession.path.size}",
+                        "Id: ${state.selectedSession.id}",
                         color = Color.White,
                     )
+
+                    Text(
+                        "Points: ${state.selectedSession.path.size}",
+                        color = Color.White,
+                    )
+
+                    Button(
+                        onClick = onCloseSessionClick,
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text("Close")
+                    }
                 }
             }
         }
@@ -201,137 +217,9 @@ private fun Map(
 @Composable
 private fun MapContent(state: State, onSessionClick: (String) -> Unit) {
     SessionLayer(state.allSessions, onSessionClick)
+    if (state.selectedSession != null) {
+        SelectedSessionLayer(state.selectedSession)
+    }
     RecordingLayer(state.path)
-    LocationLayer(state.location)
-}
-
-private val recordingLocationColor = Color(0xFFff0e3f)
-private val recordingStrokeColor = Color(0XFFdc002d)
-
-@Composable
-fun LocationLayer(latLng: LatLng?) {
-    val locationSource = rememberGeoJsonSource(
-        id = "location",
-        data = FeatureCollection(
-            features = emptyList()
-        )
-    )
-
-    CircleLayer(
-        id = "location-layer",
-        source = locationSource,
-        color = const(recordingLocationColor),
-        radius = const(6.dp),
-        strokeColor = const(recordingStrokeColor),
-        strokeWidth = const(1.5.dp),
-        pitchAlignment = const(CirclePitchAlignment.Map),
-    )
-
-    val locationFeature = latLng?.toPosition()?.let {
-        Feature(Point(coordinates = it))
-    }
-
-    locationFeature?.let {
-        locationSource.setData(it)
-    }
-}
-
-@Composable
-fun RecordingLayer(path: List<LatLng>) {
-    val pathSource = rememberGeoJsonSource(
-        id = "path",
-        data = FeatureCollection(features = emptyList())
-    )
-
-    LineLayer(
-        id = "path-line-layer",
-        source = pathSource,
-        color = const(recordingStrokeColor),
-        width = interpolate(
-            type = linear(),
-            input = zoom(),
-            7 to const(2.dp),
-            15 to const(4.dp),
-        ),
-        cap = const(LineCap.Round),
-    )
-
-    CircleLayer(
-        id = "path-dot-layer",
-        source = pathSource,
-        color = const(recordingLocationColor),
-        radius = const(4.dp),
-        strokeColor = const(recordingStrokeColor),
-        strokeWidth = const(1.5.dp),
-        pitchAlignment = const(CirclePitchAlignment.Map),
-        minZoom = 15f
-    )
-
-    pathSource.setData(
-        FeatureCollection(
-            features = if (path.size >= 2) {
-                val positions = path.map { it.toPosition() }
-                listOf(Feature(LineString(positions))) + positions.map { Feature(Point(it)) }
-            } else {
-                emptyList()
-            }
-        )
-    )
-}
-
-private val sessionLocationColor = Color(0xFF00DDFF)
-private val sessionStrokeColor = Color(0XFF008D9B)
-
-@Composable
-fun SessionLayer(sessions: List<Session>, onSessionClick: (String) -> Unit) {
-    val pathSource = rememberGeoJsonSource(
-        id = "sessions",
-        data = FeatureCollection(features = emptyList())
-    )
-
-    val featureClickHandler = { it: List<Feature> ->
-        it.find { it.properties.containsKey("sessionId") }
-            ?.getStringProperty("sessionId")
-            ?.let {
-                onSessionClick(it)
-                ClickResult.Consume
-            }
-            ?: ClickResult.Pass
-    }
-
-    LineLayer(
-        id = "session-line-layer",
-        source = pathSource,
-        color = const(sessionStrokeColor),
-        width = interpolate(
-            type = linear(),
-            input = zoom(),
-            7 to const(2.dp),
-            15 to const(4.dp),
-        ),
-        cap = const(LineCap.Round),
-        onClick = featureClickHandler
-    )
-
-    CircleLayer(
-        id = "session-dot-layer",
-        source = pathSource,
-        color = const(sessionLocationColor),
-        radius = const(4.dp),
-        strokeColor = const(sessionStrokeColor),
-        strokeWidth = const(1.5.dp),
-        pitchAlignment = const(CirclePitchAlignment.Map),
-        minZoom = 15f,
-        onClick = featureClickHandler
-    )
-
-    pathSource.setData(
-        FeatureCollection(
-            sessions.map { session ->
-                Feature(LineString(session.path.map { it.toPosition() })).also {
-                    it.setStringProperty("sessionId", session.id)
-                }
-            }
-        )
-    )
+    LocationLayer(state.location, state.recording)
 }

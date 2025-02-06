@@ -31,7 +31,10 @@ class MapScreenViewModel(
         this.viewModelScope.launch {
             sessionRepository.activeSession.collect { session ->
                 _state.update {
-                    it.copy(activeSession = session)
+                    it.copy(
+                        activeSession = session,
+                        selectedSession = null
+                    )
                 }
             }
         }
@@ -97,14 +100,25 @@ class MapScreenViewModel(
         val session = this.sessionRepository.allSessions.value.find { it.id == sessionId }
         if (session != null) {
             _state.update {
-                it.copy(activeSession = session)
+                it.copy(
+                    activeSession = null,
+                    selectedSession = session
+                )
             }
         }
     }
 
+    fun onCloseSessionClicked() {
+        _state.update {
+            it.copy(selectedSession = null)
+        }
+    }
+
+
     data class State(
         val location: LatLng? = null,
         val activeSession: Session? = null,
+        val selectedSession: Session? = null,
         val allSessions: List<Session> = emptyList(),
         val initialCameraPosition: LatLng = LatLng(52.372661, 9.739450),
         val cameraTrackingActive: Boolean = true
