@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -51,11 +53,21 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.viewmodel.compose)
             implementation("dev.icerock.moko:geo:0.7.0")
+            implementation(libs.sqldelight)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+
+        iosMain.dependencies {
+            implementation(libs.sqldelight.native)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.sqldelight.android)
+        }
     }
+
 }
 
 android {
@@ -69,3 +81,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
+
+sqldelight {
+    databases {
+        create("AppDatabase") {
+            packageName.set("database")
+        }
+    }
+}
+
+tasks.named("build").dependsOn("generateSqlDelightInterface")

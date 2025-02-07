@@ -1,0 +1,17 @@
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    session_name TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE locations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    accuracyMeters REAL,
+    speedMetersPerSecond REAL,
+    bearingDegrees REAL,
+    timestamp INTEGER NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+);

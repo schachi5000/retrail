@@ -182,6 +182,7 @@ private fun Map(
             onMapGesture()
         }
     }
+
     if (state.cameraTrackingActive) {
         scope.launch {
             val position = state.location?.latLng?.toPosition() ?: return@launch
@@ -203,7 +204,6 @@ private fun Map(
             isScaleBarEnabled = false,
             isCompassEnabled = false,
         ),
-        maximumFps = 60,
         cameraState = cameraState,
         styleUri = styleUrl
     ) {

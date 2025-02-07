@@ -11,6 +11,7 @@ koin-compose = "4.0.0"
 kotlinx-datetime = "0.6.0"
 kotlinx-navigation-compose = "2.7.0-alpha07"
 serialization = "1.7.3"
+sql-delight = "2.0.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -34,6 +35,11 @@ kotlinx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navig
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serilization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
+sqldelight = { module = "app.cash.sqldelight:runtime", version.ref = "sql-delight" }
+sqldelight-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sql-delight" }
+sqldelight-native = { module = "app.cash.sqldelight:native-driver", version.ref = "sql-delight" }
+
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
@@ -42,3 +48,4 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrains-compose" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sql-delight" }
