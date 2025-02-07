@@ -1,0 +1,63 @@
+package pro.schacher.gpsrekorder.shared.database
+
+import database.AppDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import pro.schacher.gpsrekorder.shared.model.LatLng
+import pro.schacher.gpsrekorder.shared.model.Location
+import pro.schacher.gpsrekorder.shared.model.Session
+import pro.schacher.gpsrekorder.shared.model.meters
+import pro.schacher.gpsrekorder.shared.model.ms
+
+class DatabaseDoa(private val appDatabase: AppDatabase) {
+
+    private val dbQuery = this.appDatabase.appDatabaseQueries
+
+    suspend fun getSessions(): List<Session> {
+        val sessions = withContext(Dispatchers.IO) {
+            dbQuery.getAllSessions().executeAsList()
+        }
+
+        val finalSessions = sessions.map {
+            val locations =
+                dbQuery.getLocationsForSessionId(it.id).executeAsList().map { location ->
+                    Location(
+                        latLng = LatLng(location.latitude, location.longitude),
+                        speed = location.speedMetersPerSecond?.ms,
+                        accuracy = location.accuracyMeters?.meters,
+                        heading = location.bearingDegrees,
+                        timestamp = location.timestamp,
+                        provider = location.provider
+                    )
+                }
+
+            Session(it.id, locations)
+        }
+
+        return finalSessions
+    }
+
+    suspend fun createSessions(session: Session) {
+        val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
+        if (storedSession == null) {
+            this.dbQuery.createSession(session.id, Clock.System.now().toEpochMilliseconds())
+        }
+    }
+
+    suspend fun addLocationToSession(sessionId: String, location: Location) {
+        val session = dbQuery.getSessionById(sessionId).executeAsOneOrNull() ?: return
+
+        dbQuery.addLocation(
+            sessionId = session.id,
+            latitude = location.latLng.latitude,
+            longitude = location.latLng.longitude,
+            timestamp = location.timestamp,
+            provider = location.provider,
+            accuracyMeters = location.accuracy?.inMeters,
+            bearingDegrees = location.heading,
+            speedMetersPerSecond = location.speed?.inMs
+        )
+    }
+}

@@ -10,5 +10,4 @@ data class Location(
     val heading: Double? = null,
     val speed: Speed? = null,
     val accuracy: Length? = null,
-    val level: Int? = null
-) 
+)

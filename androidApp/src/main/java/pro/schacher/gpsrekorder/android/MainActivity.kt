@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import pro.schacher.gpsrekorder.App
+import pro.schacher.gpsrekorder.shared.database.DatabaseDriverFactory
 import pro.schacher.gpsrekorder.shared.location.AndroidLocationDataSource
 
 class MainActivity : ComponentActivity() {
@@ -12,7 +13,7 @@ class MainActivity : ComponentActivity() {
 
         val locationDataSource = AndroidLocationDataSource(this)
         setContent {
-            App(locationDataSource)
+            App(locationDataSource, DatabaseDriverFactory(this))
         }
     }
 }

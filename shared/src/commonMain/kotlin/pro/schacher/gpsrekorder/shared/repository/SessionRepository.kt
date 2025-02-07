@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.location.LocationDataSource
-import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
+import pro.schacher.gpsrekorder.shared.model.Session
 
 class SessionRepository(private val locationDataSource: LocationDataSource) {
 
@@ -41,7 +41,7 @@ class SessionRepository(private val locationDataSource: LocationDataSource) {
     private fun onLocationUpdated(location: Location) {
         this._activeSession.update {
             it?.copy(
-                path = it.path + listOf(location.latLng)
+                path = it.path + listOf(location)
             )
         }
     }
@@ -54,7 +54,7 @@ class SessionRepository(private val locationDataSource: LocationDataSource) {
 
         this._activeSession.update {
             val path = locationDataSource.location?.let {
-                listOf(it.latLng)
+                listOf(it)
             } ?: emptyList()
 
             Session(
@@ -80,4 +80,3 @@ class SessionRepository(private val locationDataSource: LocationDataSource) {
     }
 }
 
-data class Session(val id: String, val path: List<LatLng> = emptyList())

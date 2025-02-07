@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
-import pro.schacher.gpsrekorder.shared.repository.Session
+import pro.schacher.gpsrekorder.shared.model.Session
 import pro.schacher.gpsrekorder.shared.repository.SessionRepository
 
 class MapScreenViewModel(
@@ -126,7 +126,7 @@ class MapScreenViewModel(
         val recording: Boolean
             get() = this.activeSession != null
 
-        val path: List<LatLng>
+        val path: List<Location>
             get() = this.activeSession?.path ?: emptyList()
     }
 }

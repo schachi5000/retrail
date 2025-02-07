@@ -24,11 +24,10 @@ import io.github.dellisd.spatialk.geojson.Feature
 import io.github.dellisd.spatialk.geojson.FeatureCollection
 import io.github.dellisd.spatialk.geojson.LineString
 import io.github.dellisd.spatialk.geojson.Point
-import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
+import pro.schacher.gpsrekorder.shared.model.Session
 import pro.schacher.gpsrekorder.shared.model.toPosition
-import pro.schacher.gpsrekorder.shared.repository.Session
 import pro.schacher.gpsrekorder.shared.utils.dpPerMeterAtTarget
 
 private val recordingLocationColor = Color(0xFFff0e3f)
@@ -110,10 +109,10 @@ fun LocationLayer(location: Location?, recording: Boolean, cameraState: CameraSt
 }
 
 @Composable
-fun RecordingLayer(path: List<LatLng>) {
+fun RecordingLayer(path: List<Location>) {
     val featureCollection = FeatureCollection(
         features = if (path.size >= 2) {
-            val positions = path.map { it.toPosition() }
+            val positions = path.map { it.latLng.toPosition() }
             listOf(Feature(LineString(positions))) + positions.map { Feature(Point(it)) }
         } else {
             emptyList()
@@ -155,7 +154,7 @@ fun SessionLayer(
         id = "sessions",
         data = FeatureCollection(
             sessions.map { session ->
-                Feature(LineString(session.path.map { it.toPosition() })).also {
+                Feature(LineString(session.path.map { it.latLng.toPosition() })).also {
                     it.setStringProperty("sessionId", session.id)
                 }
             }
@@ -201,7 +200,7 @@ fun SelectedSessionLayer(session: Session) {
     val pathSource = rememberGeoJsonSource(
         id = "selected-session",
         data = FeatureCollection(
-            Feature(LineString(session.path.map { it.toPosition() })).also {
+            Feature(LineString(session.path.map { it.latLng.toPosition() })).also {
                 it.setStringProperty("sessionId", session.id)
             }
         )

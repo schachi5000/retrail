@@ -1,10 +1,13 @@
 package pro.schacher.gpsrekorder
 
 import androidx.compose.runtime.Composable
+import database.AppDatabase
 import org.koin.compose.KoinApplication
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import pro.schacher.gpsrekorder.shared.database.DatabaseDoa
+import pro.schacher.gpsrekorder.shared.database.DatabaseDriverFactory
 import pro.schacher.gpsrekorder.shared.design.theme.AppTheme
 import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.repository.SessionRepository
@@ -20,11 +23,19 @@ val viewModels = module {
 }
 
 @Composable
-fun App(locationDataSource: LocationDataSource) {
+fun App(
+    locationDataSource: LocationDataSource,
+    databaseDriverFactory: DatabaseDriverFactory
+) {
     KoinApplication(
         application = {
             modules(
                 module { single<LocationDataSource> { locationDataSource } },
+                module {
+                    single<DatabaseDoa> {
+                        DatabaseDoa(AppDatabase(databaseDriverFactory.createDriver()))
+                    }
+                },
                 repositories,
                 viewModels
             )
