@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.Session
@@ -17,7 +18,17 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
 
     suspend fun getSessions(): List<Session> {
         val sessions = withContext(Dispatchers.IO) {
-            dbQuery.getAllSessions().executeAsList()
+            try {
+                dbQuery.getAllSessions().executeAsList().map {
+                    Session(
+                        id = it.id,
+                        path = emptyList()
+                    )
+                }
+            } catch (e: Exception) {
+                AppLogger.e(e)
+                emptyList()
+            }
         }
 
         val finalSessions = sessions.map {
@@ -43,6 +54,10 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
         val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
         if (storedSession == null) {
             this.dbQuery.createSession(session.id, Clock.System.now().toEpochMilliseconds())
+        }
+
+        session.path.forEach {
+            addLocationToSession(session.id, it)
         }
     }
 

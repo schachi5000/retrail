@@ -9,11 +9,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import pro.schacher.gpsrekorder.shared.AppLogger
+import pro.schacher.gpsrekorder.shared.database.DatabaseDoa
 import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.Session
 
-class SessionRepository(private val locationDataSource: LocationDataSource) {
+class SessionRepository(
+    private val databaseDoa: DatabaseDoa,
+    private val locationDataSource: LocationDataSource
+) {
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -34,6 +38,12 @@ class SessionRepository(private val locationDataSource: LocationDataSource) {
                 if (it != null) {
                     onLocationUpdated(it)
                 }
+            }
+        }
+
+        this.scope.launch {
+            _allSessions.update {
+                databaseDoa.getSessions()
             }
         }
     }
@@ -66,11 +76,17 @@ class SessionRepository(private val locationDataSource: LocationDataSource) {
 
     fun saveRecording() {
         val activeSession = this.activeSession.value ?: return
-        this._allSessions.update {
-            it + listOf(activeSession)
+
+        scope.launch {
+            databaseDoa.createSessions(activeSession)
+
+            _allSessions.update {
+                databaseDoa.getSessions()
+            }
+
+            cancelRecording()
         }
 
-        this.cancelRecording()
     }
 
     fun cancelRecording() {
