@@ -12,7 +12,7 @@ private val primary = Color(0XFF0000000)
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colors = if (isSystemInDarkTheme())
+        colors = if (false && isSystemInDarkTheme())
             darkColors(
                 primary = primary,
                 secondary = primary

@@ -42,7 +42,7 @@ import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
 import kotlin.time.Duration.Companion.seconds
 
 
-private const val STYLE_DARK_URL = "files/styles/ark.json"
+private const val STYLE_DARK_URL = "files/styles/dark.json"
 private const val STYLE_LIGHT_URL = "files/styles/light.json"
 
 @OptIn(ExperimentalResourceApi::class)

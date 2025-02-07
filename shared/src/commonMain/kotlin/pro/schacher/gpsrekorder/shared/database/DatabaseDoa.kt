@@ -53,7 +53,7 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
     suspend fun createSessions(session: Session) {
         val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
         if (storedSession == null) {
-            this.dbQuery.createSession(session.id, Clock.System.now().toEpochMilliseconds())
+            this.dbQuery.createSession(session.id, session.id, Clock.System.now().toEpochMilliseconds())
         }
 
         session.path.forEach {

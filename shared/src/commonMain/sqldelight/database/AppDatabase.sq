@@ -1,6 +1,6 @@
 CREATE TABLE Sessions (
     id TEXT PRIMARY KEY,
-    sessionName TEXT NOT NULL,
+    name TEXT NOT NULL,
     createdAt INTEGER NOT NULL
 );
 
@@ -18,7 +18,7 @@ CREATE TABLE Locations (
 );
 
 createSession:
-INSERT INTO Sessions (sessionName, createdAt) VALUES (?, ?);
+INSERT INTO Sessions (id, name, createdAt) VALUES (?, ?, ?);
 
 getAllSessions:
 SELECT * FROM Sessions;
