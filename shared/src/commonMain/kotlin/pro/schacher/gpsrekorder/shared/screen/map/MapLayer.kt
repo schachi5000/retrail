@@ -24,10 +24,12 @@ import io.github.dellisd.spatialk.geojson.Feature
 import io.github.dellisd.spatialk.geojson.FeatureCollection
 import io.github.dellisd.spatialk.geojson.LineString
 import io.github.dellisd.spatialk.geojson.Point
+import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.toPosition
 import pro.schacher.gpsrekorder.shared.repository.Session
+import pro.schacher.gpsrekorder.shared.utils.dpPerMeterAtTarget
 
 private val recordingLocationColor = Color(0xFFff0e3f)
 private val recordingStrokeColor = Color(0XFFdc002d)
@@ -63,16 +65,15 @@ private val lineWidth = interpolate(
 
 @Composable
 fun LocationLayer(location: Location?, recording: Boolean, cameraState: CameraState) {
-    val metersPerDp = cameraState.metersPerDpAtTarget
-    val radius by animateDpAsState((metersPerDp * (location?.accuracy?.inMeters ?: 0.0)).dp)
+    val metersPerDp = cameraState.dpPerMeterAtTarget
+    val targetRadius = location?.accuracy?.let { (metersPerDp * it.inMeters) } ?: 0.0
+    val radius by animateDpAsState(targetRadius.dp)
 
     val locationFeature = location?.let {
         Feature(Point(coordinates = it.latLng.toPosition())).also { feature ->
             feature.setNumberProperty("radius", radius.value.toDouble())
         }
-    }?.let {
-        listOf(it)
-    } ?: emptyList<Feature>()
+    }?.let { listOf(it) } ?: emptyList<Feature>()
 
     val locationSource = rememberGeoJsonSource(
         id = "location",
@@ -83,9 +84,11 @@ fun LocationLayer(location: Location?, recording: Boolean, cameraState: CameraSt
         id = "location-accuracy-layer",
         source = locationSource,
         color = const(
-            if (recording) recordingLocationColor else MaterialTheme.colors.primary.copy(
-                alpha = 0.5f
-            )
+            if (recording) {
+                recordingLocationColor
+            } else {
+                MaterialTheme.colors.primary
+            }.copy(alpha = 0.4f)
         ),
         radius = feature.get("radius").asNumber().dp,
         strokeColor = const(
@@ -99,9 +102,9 @@ fun LocationLayer(location: Location?, recording: Boolean, cameraState: CameraSt
         id = "location-layer",
         source = locationSource,
         color = const(if (recording) recordingLocationColor else Color.White),
-        radius = const(8.dp),
+        radius = const(5.dp),
         strokeColor = const(if (recording) recordingStrokeColor else MaterialTheme.colors.primary),
-        strokeWidth = const(5.dp),
+        strokeWidth = const(3.dp),
         pitchAlignment = const(CirclePitchAlignment.Map),
     )
 }
