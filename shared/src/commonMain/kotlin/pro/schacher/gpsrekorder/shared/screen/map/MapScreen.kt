@@ -2,11 +2,18 @@ package pro.schacher.gpsrekorder.shared.screen.map
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Card
@@ -92,71 +99,82 @@ fun MapScreen(
             onSessionClick = onSessionClick
         )
 
-        if (state.selectedSession != null) {
-            LazyRow {
-            }
-            Card(
-                modifier = Modifier.statusBarsPadding().padding(16.dp).align(Alignment.TopCenter),
-                shape = RoundedCornerShape(16.dp),
-                backgroundColor = Color.Black
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        "Id: ${state.selectedSession.id}",
-                        color = Color.White,
-                    )
-
-                    Text(
-                        "Points: ${state.selectedSession.path.size}",
-                        color = Color.White,
-                    )
-
-                    Button(
-                        onClick = onCloseSessionClick,
-                        modifier = Modifier.padding(top = 8.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .align(Alignment.BottomStart),
+            horizontalAlignment = Alignment.End
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                state.location?.let {
+                    FloatingActionButton(
+                        onClick = onLocationButtonClick,
+                        shape = RoundedCornerShape(16.dp),
                     ) {
-                        Text("Close")
+                        Icon(
+                            imageVector = Icons.Default.Place,
+                            contentDescription = "Stop"
+                        )
+                    }
+                }
+
+                FloatingActionButton(
+                    modifier = Modifier.padding(top = 16.dp),
+                    onClick = onStartClick,
+                    shape = RoundedCornerShape(16.dp),
+
+                    ) {
+                    if (state.recording) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = "Stop"
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Start"
+                        )
                     }
                 }
             }
-        }
 
-        Column(
-            modifier = Modifier
-                .navigationBarsPadding()
-                .padding(16.dp)
-                .align(Alignment.BottomEnd)
-        ) {
-            state.location?.let {
-                FloatingActionButton(
-                    onClick = onLocationButtonClick,
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Place,
-                        contentDescription = "Stop"
-                    )
+
+            val pagerState = rememberPagerState(
+                initialPage = 0,
+                pageCount = { state.allSessions.size })
+
+            if (state.allSessions.isNotEmpty()) {
+                LaunchedEffect(pagerState.currentPage) {
+                    onSessionClick(state.allSessions[pagerState.currentPage].id)
                 }
             }
 
-            FloatingActionButton(
-                modifier = Modifier.padding(top = 16.dp),
-                onClick = onStartClick,
-                shape = RoundedCornerShape(16.dp),
-
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.wrapContentHeight(),
+                contentPadding = PaddingValues(end = 32.dp)
+            ) { page ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    backgroundColor = Color.Black
                 ) {
-                if (state.recording) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = "Stop"
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Start"
-                    )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Id: ${state.allSessions[page].id}",
+                            color = Color.White,
+                        )
+
+                        Text(
+                            "Points: ${state.allSessions[page].path.size}",
+                            color = Color.White,
+                        )
+                    }
                 }
+
             }
+
         }
     }
 }
@@ -177,6 +195,19 @@ private fun Map(
         ),
     )
 
+    state.selectedSession?.let {
+        LaunchedEffect(state.selectedSession.id) {
+            cameraState.animateTo(
+                CameraPosition(
+                    target = state.selectedSession.path.getOrNull(0)?.latLng?.toPosition()
+                        ?: return@LaunchedEffect,
+                    zoom = 15.0,
+                    bearing = 0.0
+                ),
+                duration = 2.seconds
+            )
+        }
+    }
     LaunchedEffect(cameraState.moveReason) {
         if (cameraState.moveReason == CameraMoveReason.GESTURE) {
             onMapGesture()

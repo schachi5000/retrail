@@ -102,7 +102,8 @@ class MapScreenViewModel(
             _state.update {
                 it.copy(
                     activeSession = null,
-                    selectedSession = session
+                    selectedSession = session,
+                    cameraTrackingActive = false
                 )
             }
         }
