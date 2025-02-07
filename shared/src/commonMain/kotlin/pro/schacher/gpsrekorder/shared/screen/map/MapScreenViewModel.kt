@@ -61,7 +61,7 @@ class MapScreenViewModel(
 
     private fun onLocationUpdated(location: Location?) {
         _state.update {
-            it.copy(location = location?.latLng)
+            it.copy(location = location)
         }
     }
 
@@ -114,9 +114,8 @@ class MapScreenViewModel(
         }
     }
 
-
     data class State(
-        val location: LatLng? = null,
+        val location: Location? = null,
         val activeSession: Session? = null,
         val selectedSession: Session? = null,
         val allSessions: List<Session> = emptyList(),

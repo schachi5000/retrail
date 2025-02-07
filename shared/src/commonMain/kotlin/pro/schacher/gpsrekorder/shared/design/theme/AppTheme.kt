@@ -7,7 +7,7 @@ import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val primary = Color(0XFF008D9B)
+private val primary = Color(0XFF0000000)
 
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {

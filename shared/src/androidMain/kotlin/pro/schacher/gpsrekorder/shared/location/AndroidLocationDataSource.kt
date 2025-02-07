@@ -19,7 +19,9 @@ import pro.schacher.gpsrekorder.shared.hasPermission
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Length
 import pro.schacher.gpsrekorder.shared.model.Location
+import pro.schacher.gpsrekorder.shared.model.meters
 import pro.schacher.gpsrekorder.shared.model.ms
+import kotlin.random.Random
 
 class AndroidLocationDataSource(private val componentActivity: ComponentActivity) :
     LocationDataSource(),
@@ -94,11 +96,13 @@ class AndroidLocationDataSource(private val componentActivity: ComponentActivity
 
 typealias AndroidLocation = android.location.Location
 
+private val rng = Random.Default
 fun AndroidLocation.toLocation(): Location = Location(
     provider = this.provider ?: "unknown",
     latLng = LatLng(this.latitude, this.longitude),
     altitude = Length.fromMeters(this.altitude).takeIf { this.hasAltitude() },
     heading = this.bearing.takeIf { this.hasBearing() }?.toDouble(),
     speed = this.speed.toDouble().takeIf { this.hasSpeed() && it >= 0.0 }?.ms,
-    accuracy = Length.fromMeters(this.accuracy.toDouble()).takeIf { this.hasAccuracy() },
+//    accuracy = Length.fromMeters(this.accuracy.toDouble()).takeIf { this.hasAccuracy() },
+    accuracy = rng.nextInt(100).meters,
 )

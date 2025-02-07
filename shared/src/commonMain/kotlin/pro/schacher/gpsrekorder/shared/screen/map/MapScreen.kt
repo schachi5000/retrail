@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,32 +26,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import dev.sargunv.maplibrecompose.compose.ClickResult
+import dev.sargunv.maplibrecompose.compose.CameraState
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
-import dev.sargunv.maplibrecompose.compose.layer.CircleLayer
-import dev.sargunv.maplibrecompose.compose.layer.LineLayer
 import dev.sargunv.maplibrecompose.compose.rememberCameraState
-import dev.sargunv.maplibrecompose.compose.source.rememberGeoJsonSource
+import dev.sargunv.maplibrecompose.compose.rememberStyleState
 import dev.sargunv.maplibrecompose.core.CameraMoveReason
 import dev.sargunv.maplibrecompose.core.CameraPosition
 import dev.sargunv.maplibrecompose.core.OrnamentSettings
-import dev.sargunv.maplibrecompose.expressions.dsl.const
-import dev.sargunv.maplibrecompose.expressions.dsl.interpolate
-import dev.sargunv.maplibrecompose.expressions.dsl.linear
-import dev.sargunv.maplibrecompose.expressions.dsl.zoom
-import dev.sargunv.maplibrecompose.expressions.value.CirclePitchAlignment
-import dev.sargunv.maplibrecompose.expressions.value.LineCap
 import gps_rekorder.shared.generated.resources.Res
-import io.github.dellisd.spatialk.geojson.Feature
-import io.github.dellisd.spatialk.geojson.FeatureCollection
-import io.github.dellisd.spatialk.geojson.LineString
-import io.github.dellisd.spatialk.geojson.Point
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
-import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.toPosition
-import pro.schacher.gpsrekorder.shared.repository.Session
 import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
 import kotlin.time.Duration.Companion.seconds
 
@@ -68,7 +56,13 @@ fun MapScreen(
     MapScreen(
         modifier = modifier,
         state = state.value,
-        styleUrl = Res.getUri(STYLE_LIGHT_URL),
+        styleUrl = Res.getUri(
+            if (MaterialTheme.colors.isLight) {
+                STYLE_LIGHT_URL
+            } else {
+                STYLE_DARK_URL
+            }
+        ),
         onStartClick = viewModel::onRecordClick,
         onLocationButtonClick = viewModel::onLocationButtonClicked,
         omMapGesture = viewModel::onMapMoved,
@@ -99,7 +93,8 @@ fun MapScreen(
         )
 
         if (state.selectedSession != null) {
-
+            LazyRow {
+            }
             Card(
                 modifier = Modifier.statusBarsPadding().padding(16.dp).align(Alignment.TopCenter),
                 shape = RoundedCornerShape(16.dp),
@@ -189,7 +184,7 @@ private fun Map(
     }
     if (state.cameraTrackingActive) {
         scope.launch {
-            val position = state.location?.toPosition() ?: return@launch
+            val position = state.location?.latLng?.toPosition() ?: return@launch
             cameraState.animateTo(
                 CameraPosition(
                     target = position,
@@ -205,21 +200,23 @@ private fun Map(
         modifier = Modifier.fillMaxSize(),
         ornamentSettings = OrnamentSettings(
             isLogoEnabled = false,
-            isScaleBarEnabled = false
+            isScaleBarEnabled = false,
+            isCompassEnabled = false,
         ),
+        maximumFps = 60,
         cameraState = cameraState,
         styleUri = styleUrl
     ) {
-        MapContent(state, onSessionClick)
+        MapContent(state, cameraState, onSessionClick)
     }
 }
 
 @Composable
-private fun MapContent(state: State, onSessionClick: (String) -> Unit) {
+private fun MapContent(state: State, cameraState: CameraState, onSessionClick: (String) -> Unit) {
     SessionLayer(state.allSessions, onSessionClick)
     if (state.selectedSession != null) {
         SelectedSessionLayer(state.selectedSession)
     }
     RecordingLayer(state.path)
-    LocationLayer(state.location, state.recording)
+    LocationLayer(state.location, state.recording, cameraState)
 }

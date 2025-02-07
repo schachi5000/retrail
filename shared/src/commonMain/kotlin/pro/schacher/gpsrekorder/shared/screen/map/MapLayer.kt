@@ -1,13 +1,20 @@
 package pro.schacher.gpsrekorder.shared.screen.map
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dev.sargunv.maplibrecompose.compose.CameraState
 import dev.sargunv.maplibrecompose.compose.ClickResult
 import dev.sargunv.maplibrecompose.compose.layer.CircleLayer
 import dev.sargunv.maplibrecompose.compose.layer.LineLayer
 import dev.sargunv.maplibrecompose.compose.source.rememberGeoJsonSource
+import dev.sargunv.maplibrecompose.expressions.dsl.asNumber
 import dev.sargunv.maplibrecompose.expressions.dsl.const
+import dev.sargunv.maplibrecompose.expressions.dsl.dp
+import dev.sargunv.maplibrecompose.expressions.dsl.feature
 import dev.sargunv.maplibrecompose.expressions.dsl.interpolate
 import dev.sargunv.maplibrecompose.expressions.dsl.linear
 import dev.sargunv.maplibrecompose.expressions.dsl.zoom
@@ -18,6 +25,7 @@ import io.github.dellisd.spatialk.geojson.FeatureCollection
 import io.github.dellisd.spatialk.geojson.LineString
 import io.github.dellisd.spatialk.geojson.Point
 import pro.schacher.gpsrekorder.shared.model.LatLng
+import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.toPosition
 import pro.schacher.gpsrekorder.shared.repository.Session
 
@@ -54,38 +62,64 @@ private val lineWidth = interpolate(
 )
 
 @Composable
-fun LocationLayer(latLng: LatLng?, recording: Boolean) {
+fun LocationLayer(location: Location?, recording: Boolean, cameraState: CameraState) {
+    val metersPerDp = cameraState.metersPerDpAtTarget
+    val radius by animateDpAsState((metersPerDp * (location?.accuracy?.inMeters ?: 0.0)).dp)
+
+    val locationFeature = location?.let {
+        Feature(Point(coordinates = it.latLng.toPosition())).also { feature ->
+            feature.setNumberProperty("radius", radius.value.toDouble())
+        }
+    }?.let {
+        listOf(it)
+    } ?: emptyList<Feature>()
+
     val locationSource = rememberGeoJsonSource(
         id = "location",
-        data = FeatureCollection(
-            features = emptyList()
-        )
+        data = FeatureCollection(locationFeature)
+    )
+
+    CircleLayer(
+        id = "location-accuracy-layer",
+        source = locationSource,
+        color = const(
+            if (recording) recordingLocationColor else MaterialTheme.colors.primary.copy(
+                alpha = 0.5f
+            )
+        ),
+        radius = feature.get("radius").asNumber().dp,
+        strokeColor = const(
+            if (recording) recordingStrokeColor else MaterialTheme.colors.primary
+        ),
+        strokeWidth = const(2.dp),
+        pitchAlignment = const(CirclePitchAlignment.Map),
     )
 
     CircleLayer(
         id = "location-layer",
         source = locationSource,
-        color = const(if (recording) recordingLocationColor else selectedSessionPointColor),
-        radius = const(6.dp),
-        strokeColor = const(if (recording) recordingStrokeColor else selectedSessionStrokeColor),
-        strokeWidth = const(1.5.dp),
+        color = const(if (recording) recordingLocationColor else Color.White),
+        radius = const(8.dp),
+        strokeColor = const(if (recording) recordingStrokeColor else MaterialTheme.colors.primary),
+        strokeWidth = const(5.dp),
         pitchAlignment = const(CirclePitchAlignment.Map),
     )
-
-    val locationFeature = latLng?.toPosition()?.let {
-        Feature(Point(coordinates = it))
-    }
-
-    locationFeature?.let {
-        locationSource.setData(it)
-    }
 }
 
 @Composable
 fun RecordingLayer(path: List<LatLng>) {
+    val featureCollection = FeatureCollection(
+        features = if (path.size >= 2) {
+            val positions = path.map { it.toPosition() }
+            listOf(Feature(LineString(positions))) + positions.map { Feature(Point(it)) }
+        } else {
+            emptyList()
+        }
+    )
+
     val pathSource = rememberGeoJsonSource(
         id = "path",
-        data = FeatureCollection(features = emptyList())
+        data = featureCollection
     )
 
     LineLayer(
@@ -106,17 +140,6 @@ fun RecordingLayer(path: List<LatLng>) {
         pitchAlignment = const(CirclePitchAlignment.Map),
         minZoom = 10f
     )
-
-    pathSource.setData(
-        FeatureCollection(
-            features = if (path.size >= 2) {
-                val positions = path.map { it.toPosition() }
-                listOf(Feature(LineString(positions))) + positions.map { Feature(Point(it)) }
-            } else {
-                emptyList()
-            }
-        )
-    )
 }
 
 
@@ -127,7 +150,13 @@ fun SessionLayer(
 ) {
     val pathSource = rememberGeoJsonSource(
         id = "sessions",
-        data = FeatureCollection(features = emptyList())
+        data = FeatureCollection(
+            sessions.map { session ->
+                Feature(LineString(session.path.map { it.toPosition() })).also {
+                    it.setStringProperty("sessionId", session.id)
+                }
+            }
+        )
     )
 
     val featureClickHandler = { it: List<Feature> ->
@@ -161,16 +190,6 @@ fun SessionLayer(
         minZoom = MIN_ZOOM,
         onClick = featureClickHandler
     )
-
-    pathSource.setData(
-        FeatureCollection(
-            sessions.map { session ->
-                Feature(LineString(session.path.map { it.toPosition() })).also {
-                    it.setStringProperty("sessionId", session.id)
-                }
-            }
-        )
-    )
 }
 
 
@@ -178,7 +197,11 @@ fun SessionLayer(
 fun SelectedSessionLayer(session: Session) {
     val pathSource = rememberGeoJsonSource(
         id = "selected-session",
-        data = FeatureCollection(features = emptyList())
+        data = FeatureCollection(
+            Feature(LineString(session.path.map { it.toPosition() })).also {
+                it.setStringProperty("sessionId", session.id)
+            }
+        )
     )
 
     LineLayer(
@@ -199,13 +222,5 @@ fun SelectedSessionLayer(session: Session) {
         strokeWidth = circleStrokeWidth,
         pitchAlignment = const(CirclePitchAlignment.Map),
         minZoom = MIN_ZOOM,
-    )
-
-    pathSource.setData(
-        FeatureCollection(
-            Feature(LineString(session.path.map { it.toPosition() })).also {
-                it.setStringProperty("sessionId", session.id)
-            }
-        )
     )
 }
