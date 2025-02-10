@@ -26,29 +26,32 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
     private val dbQuery = this.appDatabase.appDatabaseQueries
 
     fun getAllSessions(): Flow<List<Session>> {
-        return this.dbQuery.getAllSessions()
+        val allLocations = getAllLocations()
+        val sessions =  this.dbQuery.getAllSessions()
             .asFlow()
             .mapToList(Dispatchers.IO)
             .map {
                 it.map { session ->
                     Session(
                         id = session.id,
-                        path = this.getLocationsForSession(session.id),
+                        path = this.dbQuery.getLocationsForSessionId(session.id)
+                            .executeAsList()
+                            .map { it.toLocation() },
                     )
                 }
             }
+
+        return combine(sessions, allLocations) { sessions, _ ->
+            sessions
+        }
     }
 
-    fun getAllLocations(): Flow<List<Location>> = this.dbQuery.getAllLocations()
-        .asFlow()
-        .mapToList(Dispatchers.IO)
-        .map { it.map { it.toLocation() } }
-
-    private fun getLocationsForSession(sessionId: String): List<Location> =
-        this.dbQuery.getLocationsForSessionId(sessionId)
-            .executeAsList()
-            .map { it.toLocation() }
-
+    private fun getAllLocations(): Flow<List<Location>> =
+        this.dbQuery.getAllLocations()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { it.map { it.toLocation() } }
+    
     suspend fun createSessions(session: Session) {
         withContext(Dispatchers.IO) {
             val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
