@@ -74,7 +74,8 @@ fun MapScreen(
         onLocationButtonClick = viewModel::onLocationButtonClicked,
         omMapGesture = viewModel::onMapMoved,
         onSessionClick = viewModel::onSessionClicked,
-        onCloseSessionClick = viewModel::onCloseSessionClicked
+        onCloseSessionClick = viewModel::onCloseSessionClicked,
+        onDeleteSessionClick = viewModel::onDeleteSessionClicked
     )
 }
 
@@ -87,6 +88,7 @@ fun MapScreen(
     onLocationButtonClick: () -> Unit,
     onSessionClick: (String) -> Unit,
     onCloseSessionClick: () -> Unit,
+    onDeleteSessionClick: (String) -> Unit,
     omMapGesture: () -> Unit
 ) {
     Box(
@@ -141,7 +143,8 @@ fun MapScreen(
 
 
             val pagerState = rememberPagerState(
-                initialPage = 0,
+                initialPage = state.allSessions.indexOfFirst { it.id == state.selectedSession?.id }
+                    .takeIf { it >= 0 } ?: 0,
                 pageCount = { state.allSessions.size })
 
             if (state.allSessions.isNotEmpty()) {
@@ -155,6 +158,8 @@ fun MapScreen(
                 modifier = Modifier.wrapContentHeight(),
                 contentPadding = PaddingValues(end = 32.dp)
             ) { page ->
+                val session = state.allSessions.getOrNull(page) ?: return@HorizontalPager
+
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     shape = RoundedCornerShape(24.dp),
@@ -162,14 +167,21 @@ fun MapScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            "Id: ${state.allSessions[page].id}",
+                            "Id: ${session.id}",
                             color = Color.White,
                         )
 
                         Text(
-                            "Points: ${state.allSessions[page].path.size}",
+                            "Points: ${session.path.size}",
                             color = Color.White,
                         )
+
+                        Button(
+                            onClick = { onDeleteSessionClick(session.id) },
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Delete")
+                        }
                     }
                 }
 

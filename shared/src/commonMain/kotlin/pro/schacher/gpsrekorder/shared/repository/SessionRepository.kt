@@ -94,5 +94,15 @@ class SessionRepository(
             null
         }
     }
+
+    fun deleteSession(sessionId: String) {
+        this.scope.launch {
+            databaseDoa.deleteSession(sessionId)
+
+            _allSessions.update {
+                databaseDoa.getSessions()
+            }
+        }
+    }
 }
 

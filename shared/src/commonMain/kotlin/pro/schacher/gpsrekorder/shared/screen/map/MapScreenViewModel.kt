@@ -77,6 +77,9 @@ class MapScreenViewModel(
             this.sessionRepository.saveRecording()
         } else {
             this.sessionRepository.startRecording()
+            this._state.update {
+                it.copy(cameraTrackingActive = true)
+            }
         }
     }
 
@@ -113,6 +116,10 @@ class MapScreenViewModel(
         _state.update {
             it.copy(selectedSession = null)
         }
+    }
+
+    fun onDeleteSessionClicked(sessionId: String) {
+        this.sessionRepository.deleteSession(sessionId)
     }
 
     data class State(

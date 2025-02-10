@@ -73,13 +73,10 @@ class IOSLocationDataSource : LocationDataSource() {
     }
 }
 
-private val rng = Random.Default
-
 private fun ExtendedLocation.toLocation(): Location = Location(
     latLng = LatLng(this.location.coordinates.latitude, this.location.coordinates.longitude),
-//    accuracy = this.location.coordinatesAccuracyMeters.takeIf { it >= 0.0 }?.meters,
+    accuracy = this.location.coordinatesAccuracyMeters.takeIf { it >= 0.0 }?.meters,
     altitude = this.altitude.altitudeMeters.takeIf { it >= 0.0 }?.meters,
     speed = this.speed.speedMps.takeIf { it >= 0.0 }?.ms,
     heading = this.azimuth.azimuthDegrees.takeIf { it >= 0.0 },
-    accuracy = rng.nextInt(100).meters,
 )

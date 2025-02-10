@@ -1,8 +1,11 @@
 package pro.schacher.gpsrekorder.shared.database
 
 import database.AppDatabase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import pro.schacher.gpsrekorder.shared.AppLogger
@@ -53,7 +56,11 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
     suspend fun createSessions(session: Session) {
         val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
         if (storedSession == null) {
-            this.dbQuery.createSession(session.id, session.id, Clock.System.now().toEpochMilliseconds())
+            this.dbQuery.createSession(
+                session.id,
+                session.id,
+                Clock.System.now().toEpochMilliseconds()
+            )
         }
 
         session.path.forEach {
@@ -62,17 +69,26 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
     }
 
     suspend fun addLocationToSession(sessionId: String, location: Location) {
-        val session = dbQuery.getSessionById(sessionId).executeAsOneOrNull() ?: return
+        withContext(Dispatchers.IO) {
+            val session =
+                dbQuery.getSessionById(sessionId).executeAsOneOrNull() ?: return@withContext
 
-        dbQuery.addLocation(
-            sessionId = session.id,
-            latitude = location.latLng.latitude,
-            longitude = location.latLng.longitude,
-            timestamp = location.timestamp,
-            provider = location.provider,
-            accuracyMeters = location.accuracy?.inMeters,
-            bearingDegrees = location.heading,
-            speedMetersPerSecond = location.speed?.inMs
-        )
+            dbQuery.addLocation(
+                sessionId = session.id,
+                latitude = location.latLng.latitude,
+                longitude = location.latLng.longitude,
+                timestamp = location.timestamp,
+                provider = location.provider,
+                accuracyMeters = location.accuracy?.inMeters,
+                bearingDegrees = location.heading,
+                speedMetersPerSecond = location.speed?.inMs
+            )
+        }
+    }
+
+    suspend fun deleteSession(sessionId: String) {
+        withContext(Dispatchers.IO) {
+            dbQuery.deleteSessionById(sessionId)
+        }
     }
 }

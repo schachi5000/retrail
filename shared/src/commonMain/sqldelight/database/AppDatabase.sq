@@ -26,6 +26,9 @@ SELECT * FROM Sessions;
 getSessionById:
 SELECT * FROM Sessions WHERE id = ?;
 
+deleteSessionById:
+DELETE FROM Sessions WHERE id = ?;
+
 getLocationsForSessionId:
 SELECT * FROM Locations WHERE sessionId = ?;
 

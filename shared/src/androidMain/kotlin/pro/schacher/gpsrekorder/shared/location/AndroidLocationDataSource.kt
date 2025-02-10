@@ -103,6 +103,5 @@ fun AndroidLocation.toLocation(): Location = Location(
     altitude = Length.fromMeters(this.altitude).takeIf { this.hasAltitude() },
     heading = this.bearing.takeIf { this.hasBearing() }?.toDouble(),
     speed = this.speed.toDouble().takeIf { this.hasSpeed() && it >= 0.0 }?.ms,
-//    accuracy = Length.fromMeters(this.accuracy.toDouble()).takeIf { this.hasAccuracy() },
-    accuracy = rng.nextInt(100).meters,
+    accuracy = Length.fromMeters(this.accuracy.toDouble()).takeIf { this.hasAccuracy() },
 )
