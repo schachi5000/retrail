@@ -112,8 +112,8 @@ fun LocationLayer(location: Location?, recording: Boolean, cameraState: CameraSt
 fun RecordingLayer(path: List<Location>) {
     val featureCollection = FeatureCollection(
         features = if (path.size >= 2) {
-            val positions = path.map { it.latLng.toPosition() }
-            listOf(Feature(LineString(positions))) + positions.map { Feature(Point(it)) }
+            path.map { Feature(Point(it.latLng.toPosition())) } +
+                    Feature(LineString(path.map { it.latLng.toPosition() }))
         } else {
             emptyList()
         }
