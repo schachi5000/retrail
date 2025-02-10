@@ -11,11 +11,13 @@ import pro.schacher.gpsrekorder.shared.database.DatabaseDriverFactory
 import pro.schacher.gpsrekorder.shared.design.theme.AppTheme
 import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.repository.SessionRepository
+import pro.schacher.gpsrekorder.shared.repository.RecordingRepository
 import pro.schacher.gpsrekorder.shared.screen.map.MapScreen
 import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel
 
 val repositories = module {
     singleOf(::SessionRepository)
+    singleOf(::RecordingRepository)
 }
 
 val viewModels = module {

@@ -153,9 +153,15 @@ fun SessionLayer(
     val pathSource = rememberGeoJsonSource(
         id = "sessions",
         data = FeatureCollection(
-            sessions.map { session ->
-                Feature(LineString(session.path.map { it.latLng.toPosition() })).also {
-                    it.setStringProperty("sessionId", session.id)
+            sessions.mapNotNull { session ->
+                if (session.path.size >= 2) {
+                    Feature(
+                        LineString(session.path.map { it.latLng.toPosition() })
+                    ).also {
+                        it.setStringProperty("sessionId", session.id)
+                    }
+                } else {
+                    null
                 }
             }
         )

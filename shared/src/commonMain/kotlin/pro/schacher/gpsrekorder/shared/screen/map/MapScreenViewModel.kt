@@ -10,10 +10,12 @@ import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.Session
+import pro.schacher.gpsrekorder.shared.repository.RecordingRepository
 import pro.schacher.gpsrekorder.shared.repository.SessionRepository
 
 class MapScreenViewModel(
     private val sessionRepository: SessionRepository,
+    private val recordingRepository: RecordingRepository,
     private val locationDataSource: LocationDataSource,
 ) : ViewModel() {
 
@@ -29,7 +31,7 @@ class MapScreenViewModel(
         }
 
         this.viewModelScope.launch {
-            sessionRepository.activeSession.collect { session ->
+            recordingRepository.activeSession.collect { session ->
                 _state.update {
                     it.copy(
                         activeSession = session,
@@ -67,16 +69,16 @@ class MapScreenViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        if (!this.sessionRepository.recording) {
+        if (!this.recordingRepository.recording) {
             this.locationDataSource.stopLocationUpdates()
         }
     }
 
     fun onRecordClick() {
-        if (this.sessionRepository.recording) {
-            this.sessionRepository.saveRecording()
+        if (this.recordingRepository.recording) {
+            this.recordingRepository.stopRecording()
         } else {
-            this.sessionRepository.startRecording()
+            this.recordingRepository.startRecording()
             this._state.update {
                 it.copy(cameraTrackingActive = true)
             }

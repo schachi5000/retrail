@@ -1,11 +1,17 @@
 package pro.schacher.gpsrekorder.shared.database
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOne
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import database.AppDatabase
-import kotlinx.coroutines.CoroutineScope
+import database.Locations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import pro.schacher.gpsrekorder.shared.AppLogger
@@ -19,52 +25,44 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
 
     private val dbQuery = this.appDatabase.appDatabaseQueries
 
-    suspend fun getSessions(): List<Session> {
-        val sessions = withContext(Dispatchers.IO) {
-            try {
-                dbQuery.getAllSessions().executeAsList().map {
+    fun getAllSessions(): Flow<List<Session>> {
+        return this.dbQuery.getAllSessions()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map {
+                it.map { session ->
                     Session(
-                        id = it.id,
-                        path = emptyList()
+                        id = session.id,
+                        path = this.getLocationsForSession(session.id),
                     )
                 }
-            } catch (e: Exception) {
-                AppLogger.e(e)
-                emptyList()
             }
-        }
-
-        val finalSessions = sessions.map {
-            val locations =
-                dbQuery.getLocationsForSessionId(it.id).executeAsList().map { location ->
-                    Location(
-                        latLng = LatLng(location.latitude, location.longitude),
-                        speed = location.speedMetersPerSecond?.ms,
-                        accuracy = location.accuracyMeters?.meters,
-                        heading = location.bearingDegrees,
-                        timestamp = location.timestamp,
-                        provider = location.provider
-                    )
-                }
-
-            Session(it.id, locations)
-        }
-
-        return finalSessions
     }
 
-    suspend fun createSessions(session: Session) {
-        val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
-        if (storedSession == null) {
-            this.dbQuery.createSession(
-                session.id,
-                session.id,
-                Clock.System.now().toEpochMilliseconds()
-            )
-        }
+    fun getAllLocations(): Flow<List<Location>> = this.dbQuery.getAllLocations()
+        .asFlow()
+        .mapToList(Dispatchers.IO)
+        .map { it.map { it.toLocation() } }
 
-        session.path.forEach {
-            addLocationToSession(session.id, it)
+    private fun getLocationsForSession(sessionId: String): List<Location> =
+        this.dbQuery.getLocationsForSessionId(sessionId)
+            .executeAsList()
+            .map { it.toLocation() }
+
+    suspend fun createSessions(session: Session) {
+        withContext(Dispatchers.IO) {
+            val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
+            if (storedSession == null) {
+                dbQuery.createSession(
+                    session.id,
+                    session.id,
+                    Clock.System.now().toEpochMilliseconds()
+                )
+            }
+
+            session.path.forEach {
+                addLocationToSession(session.id, it)
+            }
         }
     }
 
@@ -92,3 +90,12 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
         }
     }
 }
+
+private fun Locations.toLocation(): Location = Location(
+    latLng = LatLng(this.latitude, this.longitude),
+    speed = this.speedMetersPerSecond?.ms,
+    accuracy = this.accuracyMeters?.meters,
+    heading = this.bearingDegrees,
+    timestamp = this.timestamp,
+    provider = this.provider
+)

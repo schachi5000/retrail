@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.kotlinx.viewmodel.compose)
             implementation("dev.icerock.moko:geo:0.7.0")
             implementation(libs.sqldelight)
+            implementation("app.cash.sqldelight:coroutines-extensions:2.0.2")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
