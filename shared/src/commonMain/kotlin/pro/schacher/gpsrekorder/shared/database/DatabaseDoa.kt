@@ -1,6 +1,5 @@
 package pro.schacher.gpsrekorder.shared.database
 
-import androidx.compose.ui.graphics.Path
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import database.AppDatabase

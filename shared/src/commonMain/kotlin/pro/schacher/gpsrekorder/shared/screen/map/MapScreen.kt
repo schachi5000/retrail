@@ -1,18 +1,33 @@
 package pro.schacher.gpsrekorder.shared.screen.map
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.with
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -26,15 +41,22 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import dev.sargunv.maplibrecompose.compose.CameraState
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
@@ -47,6 +69,8 @@ import gps_rekorder.shared.generated.resources.Res
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
+import pro.schacher.gpsrekorder.shared.AppLogger
+import pro.schacher.gpsrekorder.shared.model.Session
 import pro.schacher.gpsrekorder.shared.model.toPosition
 import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
 import kotlin.time.Duration.Companion.seconds
@@ -62,6 +86,7 @@ fun MapScreen(
     viewModel: MapScreenViewModel = koinInject()
 ) {
     val state = viewModel.state.collectAsState()
+
 
     MapScreen(
         modifier = modifier,
@@ -82,6 +107,7 @@ fun MapScreen(
     )
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
@@ -104,14 +130,13 @@ fun MapScreen(
             onSessionClick = onSessionClick
         )
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .align(Alignment.BottomStart),
-            horizontalAlignment = Alignment.End
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp).align(Alignment.BottomEnd)) {
                 AnimatedVisibility(
                     visible = state.location != null && !state.cameraTrackingActive,
                     enter = fadeIn(),
@@ -127,70 +152,131 @@ fun MapScreen(
                         )
                     }
                 }
+            }
 
-                FloatingActionButton(
-                    modifier = Modifier.padding(top = 16.dp),
-                    onClick = onStartClick,
-                    shape = RoundedCornerShape(16.dp),
+            val color by animateColorAsState(
+                targetValue = if (state.recording) {
+                    Color.Red
+                } else {
+                    MaterialTheme.colors.secondary
+                }
+            )
 
+            FloatingActionButton(
+                modifier = Modifier.navigationBarsPadding()
+                    .padding(bottom = 16.dp)
+                    .align(Alignment.BottomCenter)
+                    .wrapContentSize(),
+                backgroundColor = color,
+                onClick = onStartClick,
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                AnimatedContent(targetState = state.recording) {
+                    val infiniteTransition = rememberInfiniteTransition()
+
+                    // Animate the phase of the stroke to create the moving snake effect
+                    val phase by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 250f,  // Adjust for speed
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(
+                                durationMillis = 3000,
+                                easing = LinearEasing
+                            ),
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                    if (state.recording) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = "Stop"
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Start"
-                        )
-                    }
-                }
-            }
+                        if (it) {
+                            Box {
+                                Canvas(modifier = Modifier.size(32.dp)) {
+                                    val strokeWidth = 6f
+                                    val radius = size.minDimension / 2f
 
+                                    drawCircle(
+                                        color = Color.White,  // Moving stroke color
+                                        radius = radius,
+                                        style = Stroke(
+                                            width = strokeWidth,
+                                            pathEffect = PathEffect.dashPathEffect(
+                                                intervals = floatArrayOf(10f, 10f),  // Dash pattern
+                                                phase = phase  // Moves the stroke
+                                            )
+                                        )
+                                    )
+                                }
 
-            val pagerState = rememberPagerState(
-                initialPage = state.allSessions.indexOfFirst { it.id == state.selectedSession?.id }
-                    .takeIf { it >= 0 } ?: 0,
-                pageCount = { state.allSessions.size })
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    tint = Color.White,
+                                    contentDescription = "Start"
+                                )
+                            }
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Start"
+                            )
 
-            if (state.allSessions.isNotEmpty()) {
-                LaunchedEffect(pagerState.currentPage) {
-                    onSessionClick(state.allSessions[pagerState.currentPage].id)
-                }
-            }
-
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.wrapContentHeight(),
-                contentPadding = PaddingValues(end = 32.dp)
-            ) { page ->
-                val session = state.allSessions.getOrNull(page) ?: return@HorizontalPager
-
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    backgroundColor = Color.Black
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Id: ${session.id}",
-                            color = Color.White,
-                        )
-
-                        Text(
-                            "Points: ${session.path.size}",
-                            color = Color.White,
-                        )
-
-                        Button(
-                            onClick = { onDeleteSessionClick(session.id) },
-                            modifier = Modifier.align(Alignment.End)
-                        ) {
-                            Text("Delete")
+                            Text(
+                                modifier = Modifier.padding(start = 8.dp),
+                                text = "Record",
+                                color = Color.White
+                            )
                         }
                     }
                 }
+            }
+        }
+
+        var displaySession by remember { mutableStateOf(state.selectedSession) }
+        if (state.selectedSession != null) {
+            displaySession = state.selectedSession
+            AppLogger.d("MapScreen") { "Display session ${displaySession?.id}" }
+        }
+
+        AnimatedVisibility(state.selectedSession != null) {
+            Column(
+                modifier = Modifier.statusBarsPadding()
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                displaySession?.let { SessionCard(it, onDeleteSessionClick) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SessionCard(
+    session: Session,
+    onDeleteSessionClick: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        backgroundColor = Color.Black
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Id: ${session.id}",
+                color = Color.White,
+            )
+
+            Text(
+                "Points: ${session.path.size}",
+                color = Color.White,
+            )
+
+            Button(
+                onClick = { onDeleteSessionClick(session.id) },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Delete")
             }
         }
     }

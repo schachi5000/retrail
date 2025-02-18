@@ -43,8 +43,11 @@ class MapScreenViewModel(
 
         this.viewModelScope.launch {
             sessionRepository.allSessions.collect { sessions ->
-                _state.update {
-                    it.copy(allSessions = sessions)
+                _state.update { state ->
+                    state.copy(
+                        allSessions = sessions,
+                        selectedSession = sessions.find { it.id == state.selectedSession?.id }
+                    )
                 }
             }
         }
