@@ -1,5 +1,8 @@
 package pro.schacher.gpsrekorder.shared.screen.map
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -109,7 +112,11 @@ fun MapScreen(
             horizontalAlignment = Alignment.End
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                state.location?.let {
+                AnimatedVisibility(
+                    visible = state.location != null && !state.cameraTrackingActive,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
                     FloatingActionButton(
                         onClick = onLocationButtonClick,
                         shape = RoundedCornerShape(16.dp),
@@ -184,9 +191,7 @@ fun MapScreen(
                         }
                     }
                 }
-
             }
-
         }
     }
 }
@@ -220,6 +225,7 @@ private fun Map(
             )
         }
     }
+
     LaunchedEffect(cameraState.moveReason) {
         if (cameraState.moveReason == CameraMoveReason.GESTURE) {
             onMapGesture()

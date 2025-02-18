@@ -203,13 +203,17 @@ fun SessionLayer(
 
 @Composable
 fun SelectedSessionLayer(session: Session) {
+    val features = if (session.path.size > 2) {
+        Feature(LineString(session.path.map { it.latLng.toPosition() })).also {
+            it.setStringProperty("sessionId", session.id)
+        }.let { listOf(it) }
+    } else {
+        emptyList()
+    }
+
     val pathSource = rememberGeoJsonSource(
         id = "selected-session",
-        data = FeatureCollection(
-            Feature(LineString(session.path.map { it.latLng.toPosition() })).also {
-                it.setStringProperty("sessionId", session.id)
-            }
-        )
+        data = FeatureCollection(features)
     )
 
     LineLayer(
