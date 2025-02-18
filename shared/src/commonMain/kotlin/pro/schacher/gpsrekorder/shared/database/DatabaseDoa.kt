@@ -1,20 +1,17 @@
 package pro.schacher.gpsrekorder.shared.database
 
+import androidx.compose.ui.graphics.Path
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import app.cash.sqldelight.coroutines.mapToOne
-import app.cash.sqldelight.coroutines.mapToOneOrNull
 import database.AppDatabase
-import database.Locations
+import database.LocationEntry
+import database.SessionEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
-import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.Session
@@ -26,32 +23,25 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
     private val dbQuery = this.appDatabase.appDatabaseQueries
 
     fun getAllSessions(): Flow<List<Session>> {
-        val allLocations = getAllLocations()
-        val sessions =  this.dbQuery.getAllSessions()
+        val locations = this.dbQuery.getAllLocations()
             .asFlow()
             .mapToList(Dispatchers.IO)
-            .map {
-                it.map { session ->
-                    Session(
-                        id = session.id,
-                        path = this.dbQuery.getLocationsForSessionId(session.id)
-                            .executeAsList()
-                            .map { it.toLocation() },
-                    )
-                }
-            }
 
-        return combine(sessions, allLocations) { sessions, _ ->
-            sessions
+        val sessions = this.dbQuery.getAllSessions()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+
+        return combine(sessions, locations) { sessionEntries, locationEntries ->
+            val groupedLocations =
+                locationEntries.map { location -> location.sessionId to location.toLocation() }
+                    .groupBy({ it.first }, { it.second })
+
+            sessionEntries.map { session ->
+                session.toSession(groupedLocations[session.id] ?: emptyList())
+            }
         }
     }
 
-    private fun getAllLocations(): Flow<List<Location>> =
-        this.dbQuery.getAllLocations()
-            .asFlow()
-            .mapToList(Dispatchers.IO)
-            .map { it.map { it.toLocation() } }
-    
     suspend fun createSessions(session: Session) {
         withContext(Dispatchers.IO) {
             val storedSession = dbQuery.getSessionById(session.id).executeAsOneOrNull()
@@ -94,7 +84,13 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
     }
 }
 
-private fun Locations.toLocation(): Location = Location(
+private fun SessionEntry.toSession(path: List<Location>): Session = Session(
+    id = this.id,
+    createdAt = this.createdAt,
+    path = path
+)
+
+private fun LocationEntry.toLocation(): Location = Location(
     latLng = LatLng(this.latitude, this.longitude),
     speed = this.speedMetersPerSecond?.ms,
     accuracy = this.accuracyMeters?.meters,

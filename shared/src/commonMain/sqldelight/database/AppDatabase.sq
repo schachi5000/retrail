@@ -1,10 +1,10 @@
-CREATE TABLE Sessions (
+CREATE TABLE SessionEntry (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     createdAt INTEGER NOT NULL
 );
 
-CREATE TABLE Locations (
+CREATE TABLE LocationEntry (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sessionId TEXT NOT NULL,
     latitude REAL NOT NULL,
@@ -14,27 +14,27 @@ CREATE TABLE Locations (
     speedMetersPerSecond REAL,
     bearingDegrees REAL,
     provider TEXT NOT NULL ,
-    FOREIGN KEY (sessionId) REFERENCES Sessions (id) ON DELETE CASCADE
+    FOREIGN KEY (sessionId) REFERENCES SessionEntry (id) ON DELETE CASCADE
 );
 
 createSession:
-INSERT INTO Sessions (id, name, createdAt) VALUES (?, ?, ?);
+INSERT INTO SessionEntry (id, name, createdAt) VALUES (?, ?, ?);
 
 getAllSessions:
-SELECT * FROM Sessions;
+SELECT * FROM SessionEntry;
 
 getSessionById:
-SELECT * FROM Sessions WHERE id = ?;
+SELECT * FROM SessionEntry WHERE id = ?;
 
 deleteSessionById:
-DELETE FROM Sessions WHERE id = ?;
+DELETE FROM SessionEntry WHERE id = ?;
 
 getAllLocations:
-SELECT * FROM Locations;
+SELECT * FROM LocationEntry;
 
 getLocationsForSessionId:
-SELECT * FROM Locations WHERE sessionId = ?;
+SELECT * FROM LocationEntry WHERE sessionId = ?;
 
 addLocation:
-INSERT OR REPLACE INTO Locations (sessionId, latitude, longitude, timestamp, accuracyMeters, speedMetersPerSecond, bearingDegrees, provider)
+INSERT OR REPLACE INTO LocationEntry (sessionId, latitude, longitude, timestamp, accuracyMeters, speedMetersPerSecond, bearingDegrees, provider)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
