@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -12,26 +13,17 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.with
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Card
@@ -40,10 +32,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,14 +43,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import dev.sargunv.maplibrecompose.compose.CameraState
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
 import dev.sargunv.maplibrecompose.compose.rememberCameraState
-import dev.sargunv.maplibrecompose.compose.rememberStyleState
 import dev.sargunv.maplibrecompose.core.CameraMoveReason
 import dev.sargunv.maplibrecompose.core.CameraPosition
 import dev.sargunv.maplibrecompose.core.OrnamentSettings
@@ -154,82 +144,13 @@ fun MapScreen(
                 }
             }
 
-            val color by animateColorAsState(
-                targetValue = if (state.recording) {
-                    Color.Red
-                } else {
-                    MaterialTheme.colors.secondary
-                }
-            )
-
-            FloatingActionButton(
+            RecordButton(
                 modifier = Modifier.navigationBarsPadding()
                     .padding(bottom = 16.dp)
-                    .align(Alignment.BottomCenter)
-                    .wrapContentSize(),
-                backgroundColor = color,
-                onClick = onStartClick,
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                AnimatedContent(targetState = state.recording) {
-                    val infiniteTransition = rememberInfiniteTransition()
-
-                    // Animate the phase of the stroke to create the moving snake effect
-                    val phase by infiniteTransition.animateFloat(
-                        initialValue = 0f,
-                        targetValue = 250f,  // Adjust for speed
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(
-                                durationMillis = 3000,
-                                easing = LinearEasing
-                            ),
-                        )
-                    )
-
-                    Row(
-                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (it) {
-                            Box {
-                                Canvas(modifier = Modifier.size(32.dp)) {
-                                    val strokeWidth = 6f
-                                    val radius = size.minDimension / 2f
-
-                                    drawCircle(
-                                        color = Color.White,  // Moving stroke color
-                                        radius = radius,
-                                        style = Stroke(
-                                            width = strokeWidth,
-                                            pathEffect = PathEffect.dashPathEffect(
-                                                intervals = floatArrayOf(10f, 10f),  // Dash pattern
-                                                phase = phase  // Moves the stroke
-                                            )
-                                        )
-                                    )
-                                }
-
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    tint = Color.White,
-                                    contentDescription = "Start"
-                                )
-                            }
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Start"
-                            )
-
-                            Text(
-                                modifier = Modifier.padding(start = 8.dp),
-                                text = "Record",
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-            }
+                    .align(Alignment.BottomCenter),
+                state = state,
+                onClick = onStartClick
+            )
         }
 
         var displaySession by remember { mutableStateOf(state.selectedSession) }
@@ -354,4 +275,110 @@ private fun MapContent(state: State, cameraState: CameraState, onSessionClick: (
     }
     RecordingLayer(state.path)
     LocationLayer(state.location, state.recording, cameraState)
+}
+
+@Composable
+private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: () -> Unit) {
+    val color by animateColorAsState(
+        targetValue = if (state.recording) {
+            Color.Red
+        } else {
+            MaterialTheme.colors.secondary
+        }
+    )
+
+    FloatingActionButton(
+        modifier = modifier
+            .wrapContentSize(),
+        backgroundColor = color,
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        AnimatedContent(targetState = state.recording) {
+            val rotation by rememberInfiniteTransition().animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,  // Adjust for speed
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 3000, easing = LinearEasing),
+                )
+            )
+
+            val alpha by rememberInfiniteTransition().animateFloat(
+                initialValue = .2f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1000, easing = LinearOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                )
+            )
+
+            Row(
+
+            ) {
+                if (it) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Canvas(
+                            modifier = Modifier.size(36.dp).align(Alignment.Center)
+                                .rotate(rotation)
+                        ) {
+                            drawCircle(
+                                color = Color.White,  // Moving stroke color
+                                radius = size.minDimension / 2f,
+                                style = Stroke(
+                                    width = 6.dp.value,
+                                    pathEffect = PathEffect.dashPathEffect(
+                                        intervals = floatArrayOf(10f, 10f),  // Dash pattern
+//                                                phase = phase  // Moves the stroke
+                                        phase = 10f
+                                    )
+                                )
+                            )
+                        }
+
+                        Canvas(
+                            modifier = Modifier.size(16.dp)
+                        ) {
+                            drawCircle(
+                                color = Color.White,  // Moving stroke color
+                                radius = size.minDimension / 2f,
+                                style = Stroke(
+                                    width = 8.dp.value,
+                                )
+                            )
+
+                            drawCircle(
+                                alpha = alpha,
+                                color = Color.White,  // Moving stroke color
+                                radius = size.minDimension / 3.5f,
+                                style = Fill
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Canvas(
+                            modifier = Modifier.size(16.dp)
+                        ) {
+                            drawCircle(
+                                color = Color.White,  // Moving stroke color
+                                radius = size.minDimension / 2f,
+                                style = Stroke(
+                                    width = 7.dp.value,
+                                )
+                            )
+                        }
+
+                        Text(
+                            modifier = Modifier.padding(start = 8.dp),
+                            text = "Record",
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
