@@ -308,7 +308,7 @@ private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: (
         AnimatedContent(targetState = state.recording) {
             val rotation by rememberInfiniteTransition().animateFloat(
                 initialValue = 0f,
-                targetValue = 360f,  // Adjust for speed
+                targetValue = 360f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(durationMillis = 3000, easing = LinearEasing),
                 )
