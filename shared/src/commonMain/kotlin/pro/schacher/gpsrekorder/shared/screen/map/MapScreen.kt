@@ -8,12 +8,14 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,10 +46,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import dev.sargunv.maplibrecompose.compose.CameraState
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
@@ -153,12 +157,6 @@ fun MapScreen(
             )
         }
 
-        var displaySession by remember { mutableStateOf(state.selectedSession) }
-        if (state.selectedSession != null) {
-            displaySession = state.selectedSession
-            AppLogger.d("MapScreen") { "Display session ${displaySession?.id}" }
-        }
-
         AnimatedVisibility(state.selectedSession != null) {
             Column(
                 modifier = Modifier.statusBarsPadding()
@@ -166,7 +164,9 @@ fun MapScreen(
                     .padding(16.dp)
                     .align(Alignment.TopStart)
             ) {
-                displaySession?.let { SessionCard(it, onDeleteSessionClick) }
+                state.selectedSession?.let {
+                    SessionCard(it, onDeleteSessionClick, onCloseSessionClick)
+                }
             }
         }
     }
@@ -175,7 +175,8 @@ fun MapScreen(
 @Composable
 private fun SessionCard(
     session: Session,
-    onDeleteSessionClick: (String) -> Unit
+    onDeleteClick: (String) -> Unit,
+    onCloseClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -193,11 +194,21 @@ private fun SessionCard(
                 color = Color.White,
             )
 
-            Button(
-                onClick = { onDeleteSessionClick(session.id) },
-                modifier = Modifier.align(Alignment.End)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Delete")
+                Button(
+                    onClick = { onDeleteClick(session.id) },
+                ) {
+                    Text("Delete")
+                }
+
+                Button(
+                    onClick = { onCloseClick() },
+                ) {
+                    Text("Close")
+                }
             }
         }
     }
@@ -303,18 +314,7 @@ private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: (
                 )
             )
 
-            val alpha by rememberInfiniteTransition().animateFloat(
-                initialValue = .2f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = 1000, easing = LinearOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                )
-            )
-
-            Row(
-
-            ) {
+            Row {
                 if (it) {
                     Box(contentAlignment = Alignment.Center) {
                         Canvas(
@@ -322,13 +322,12 @@ private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: (
                                 .rotate(rotation)
                         ) {
                             drawCircle(
-                                color = Color.White,  // Moving stroke color
+                                color = Color.White,
                                 radius = size.minDimension / 2f,
                                 style = Stroke(
                                     width = 6.dp.value,
                                     pathEffect = PathEffect.dashPathEffect(
-                                        intervals = floatArrayOf(10f, 10f),  // Dash pattern
-//                                                phase = phase  // Moves the stroke
+                                        intervals = floatArrayOf(10f, 10f),
                                         phase = 10f
                                     )
                                 )
@@ -338,19 +337,10 @@ private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: (
                         Canvas(
                             modifier = Modifier.size(16.dp)
                         ) {
-                            drawCircle(
+                            drawRoundRect(
                                 color = Color.White,  // Moving stroke color
-                                radius = size.minDimension / 2f,
-                                style = Stroke(
-                                    width = 8.dp.value,
-                                )
-                            )
-
-                            drawCircle(
-                                alpha = alpha,
-                                color = Color.White,  // Moving stroke color
-                                radius = size.minDimension / 3.5f,
-                                style = Fill
+                                size = size,
+                                cornerRadius = CornerRadius(8.dp.value),
                             )
                         }
                     }
