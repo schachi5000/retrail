@@ -15,7 +15,7 @@ import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.Session
 import pro.schacher.gpsrekorder.shared.model.meters
-import pro.schacher.gpsrekorder.shared.model.ms
+import pro.schacher.gpsrekorder.shared.model.metersPerSecond
 
 class DatabaseDoa(private val appDatabase: AppDatabase) {
 
@@ -71,7 +71,7 @@ class DatabaseDoa(private val appDatabase: AppDatabase) {
                 provider = location.provider,
                 accuracyMeters = location.accuracy?.inMeters,
                 bearingDegrees = location.heading,
-                speedMetersPerSecond = location.speed?.inMs
+                speedMetersPerSecond = location.speed?.metersPerSecond
             )
         }
     }
@@ -91,7 +91,7 @@ private fun SessionEntry.toSession(path: List<Location>): Session = Session(
 
 private fun LocationEntry.toLocation(): Location = Location(
     latLng = LatLng(this.latitude, this.longitude),
-    speed = this.speedMetersPerSecond?.ms,
+    speed = this.speedMetersPerSecond?.metersPerSecond,
     accuracy = this.accuracyMeters?.meters,
     heading = this.bearingDegrees,
     timestamp = this.timestamp,

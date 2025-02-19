@@ -71,7 +71,6 @@ import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
 import pro.schacher.gpsrekorder.shared.utils.AnimatedValueVisibility
 import kotlin.time.Duration.Companion.seconds
 
-
 private const val STYLE_DARK_URL = "files/styles/dark.json"
 private const val STYLE_LIGHT_URL = "files/styles/light.json"
 
@@ -82,7 +81,6 @@ fun MapScreen(
     viewModel: MapScreenViewModel = koinInject()
 ) {
     val state = viewModel.state.collectAsState()
-
 
     MapScreen(
         modifier = modifier,
@@ -99,7 +97,8 @@ fun MapScreen(
         omMapGesture = viewModel::onMapMoved,
         onSessionClick = viewModel::onSessionClicked,
         onCloseSessionClick = viewModel::onCloseSessionClicked,
-        onDeleteSessionClick = viewModel::onDeleteSessionClicked
+        onDeleteSessionClick = viewModel::onDeleteSessionClicked,
+        onPlaybackClick = viewModel::onStartPlaybackClicked
     )
 }
 
@@ -113,7 +112,8 @@ fun MapScreen(
     onLocationButtonClick: () -> Unit,
     onSessionClick: (String) -> Unit,
     onCloseSessionClick: () -> Unit,
-    onDeleteSessionClick: (String) -> Unit,
+    onDeleteSessionClick: () -> Unit,
+    onPlaybackClick: () -> Unit,
     omMapGesture: () -> Unit
 ) {
     Box(
@@ -166,7 +166,7 @@ fun MapScreen(
                     .padding(16.dp)
                     .align(Alignment.TopStart)
             ) {
-                SessionCard(it, onDeleteSessionClick, onCloseSessionClick)
+                SessionCard(it, onPlaybackClick, onDeleteSessionClick, onCloseSessionClick)
             }
         }
     }
@@ -175,7 +175,8 @@ fun MapScreen(
 @Composable
 private fun SessionCard(
     session: Session,
-    onDeleteClick: (String) -> Unit,
+    onPlaybackClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onCloseClick: () -> Unit
 ) {
     Card(
@@ -199,9 +200,15 @@ private fun SessionCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(
-                    onClick = { onDeleteClick(session.id) },
+                    onClick = { onDeleteClick() },
                 ) {
                     Text("Delete")
+                }
+
+                Button(
+                    onClick = { onPlaybackClick() },
+                ) {
+                    Text("Play")
                 }
 
                 Button(

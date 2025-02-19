@@ -11,20 +11,20 @@ data class Speed private constructor(private val ms: Double) : Comparable<Speed>
 
         const val MS_TO_MPH = 2.237
 
-        fun fromMs(ms: Double): Speed = Speed(ms)
+        fun fromMetersPerSecond(ms: Double): Speed = Speed(ms)
 
-        fun fromKmh(kmh: Double): Speed = Speed(kmh * KMH_TO_MS)
+        fun fromKilometerPerSeconds(kmh: Double): Speed = Speed(kmh * KMH_TO_MS)
 
-        val zero = 0.0.kmh
+        val zero = 0.0.kilometersPerHour
 
         const val SECONDS_TO_MILLISECONDS = 1000.0
     }
 
-    val inMs: Double = this.ms
+    val metersPerSecond: Double = this.ms
 
-    val inKmh: Double = this.ms / KMH_TO_MS
+    val kilometersPerHour: Double = this.ms / KMH_TO_MS
 
-    val inMph: Double = this.ms * MS_TO_MPH
+    val milesPerHour: Double = this.ms * MS_TO_MPH
 
     override operator fun compareTo(other: Speed): Int = this.ms.compareTo(other.ms)
 }
@@ -33,10 +33,10 @@ data class Speed private constructor(private val ms: Double) : Comparable<Speed>
 /**
  * Convenience function to create a [Speed] in meters per second from a [Double].
  */
-inline val Double.ms: Speed get() = Speed.fromMs(this)
+inline val Double.metersPerSecond: Speed get() = Speed.fromMetersPerSecond(this)
 
 /**
  * Convenience function to create a [Speed] in kilometers per hour from a [Double].
  */
-inline val Double.kmh: Speed get() = Speed.fromKmh(this)
+inline val Double.kilometersPerHour: Speed get() = Speed.fromKilometerPerSeconds(this)
 

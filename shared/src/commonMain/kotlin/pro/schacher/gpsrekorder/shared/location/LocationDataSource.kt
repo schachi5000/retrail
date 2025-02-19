@@ -3,6 +3,7 @@ package pro.schacher.gpsrekorder.shared.location
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import pro.schacher.gpsrekorder.shared.model.Location
+import pro.schacher.gpsrekorder.shared.model.Session
 
 abstract class LocationDataSource {
 
@@ -20,6 +21,8 @@ abstract class LocationDataSource {
     abstract fun stopLocationUpdates()
 
     abstract fun hasLocationPermission(): Boolean
+
+    abstract fun updateTestLocation(location: Location)
 
     abstract suspend fun requestLocationPermission() : Boolean
 }

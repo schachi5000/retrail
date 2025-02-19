@@ -16,9 +16,9 @@ import platform.CoreLocation.kCLLocationAccuracyBest
 import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
+import pro.schacher.gpsrekorder.shared.model.Session
 import pro.schacher.gpsrekorder.shared.model.meters
-import pro.schacher.gpsrekorder.shared.model.ms
-import kotlin.random.Random
+import pro.schacher.gpsrekorder.shared.model.metersPerSecond
 
 class IOSLocationDataSource : LocationDataSource() {
 
@@ -71,12 +71,14 @@ class IOSLocationDataSource : LocationDataSource() {
         this.updateJob?.cancel()
         this.locationTracker.stopTracking()
     }
+
+    override fun updateTestLocation(location: Location) {}
 }
 
 private fun ExtendedLocation.toLocation(): Location = Location(
     latLng = LatLng(this.location.coordinates.latitude, this.location.coordinates.longitude),
     accuracy = this.location.coordinatesAccuracyMeters.takeIf { it >= 0.0 }?.meters,
     altitude = this.altitude.altitudeMeters.takeIf { it >= 0.0 }?.meters,
-    speed = this.speed.speedMps.takeIf { it >= 0.0 }?.ms,
+    speed = this.speed.speedMps.takeIf { it >= 0.0 }?.metersPerSecond,
     heading = this.azimuth.azimuthDegrees.takeIf { it >= 0.0 },
 )

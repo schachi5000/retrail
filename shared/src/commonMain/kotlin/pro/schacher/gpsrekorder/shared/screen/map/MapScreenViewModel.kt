@@ -10,12 +10,14 @@ import pro.schacher.gpsrekorder.shared.location.LocationDataSource
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Location
 import pro.schacher.gpsrekorder.shared.model.Session
+import pro.schacher.gpsrekorder.shared.repository.PlaybackRepository
 import pro.schacher.gpsrekorder.shared.repository.RecordingRepository
 import pro.schacher.gpsrekorder.shared.repository.SessionRepository
 
 class MapScreenViewModel(
     private val sessionRepository: SessionRepository,
     private val recordingRepository: RecordingRepository,
+    private val playbackRepository: PlaybackRepository,
     private val locationDataSource: LocationDataSource,
 ) : ViewModel() {
 
@@ -123,8 +125,19 @@ class MapScreenViewModel(
         }
     }
 
-    fun onDeleteSessionClicked(sessionId: String) {
-        this.sessionRepository.deleteSession(sessionId)
+    fun onDeleteSessionClicked() {
+        this.state.value.selectedSession?.let {
+            this.sessionRepository.deleteSession(it.id)
+        }
+    }
+
+    fun onStartPlaybackClicked() {
+        if (this.playbackRepository.state.value != null) {
+            this.playbackRepository.stopPlayback()
+        } else {
+            val session = _state.value.selectedSession ?: return
+            this.playbackRepository.startPlayback(session)
+        }
     }
 
     data class State(
