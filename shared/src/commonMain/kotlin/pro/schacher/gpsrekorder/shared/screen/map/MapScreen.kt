@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.sargunv.maplibrecompose.compose.CameraState
 import dev.sargunv.maplibrecompose.compose.MaplibreMap
 import dev.sargunv.maplibrecompose.compose.rememberCameraState
@@ -67,6 +68,7 @@ import pro.schacher.gpsrekorder.shared.AppLogger
 import pro.schacher.gpsrekorder.shared.model.Session
 import pro.schacher.gpsrekorder.shared.model.toPosition
 import pro.schacher.gpsrekorder.shared.screen.map.MapScreenViewModel.State
+import pro.schacher.gpsrekorder.shared.utils.AnimatedValueVisibility
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -157,16 +159,14 @@ fun MapScreen(
             )
         }
 
-        AnimatedVisibility(state.selectedSession != null) {
+        AnimatedValueVisibility(state.selectedSession) {
             Column(
                 modifier = Modifier.statusBarsPadding()
                     .fillMaxWidth()
                     .padding(16.dp)
                     .align(Alignment.TopStart)
             ) {
-                state.selectedSession?.let {
-                    SessionCard(it, onDeleteSessionClick, onCloseSessionClick)
-                }
+                SessionCard(it, onDeleteSessionClick, onCloseSessionClick)
             }
         }
     }
@@ -338,9 +338,9 @@ private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: (
                             modifier = Modifier.size(16.dp)
                         ) {
                             drawRoundRect(
-                                color = Color.White,  // Moving stroke color
+                                color = Color.White,
                                 size = size,
-                                cornerRadius = CornerRadius(8.dp.value),
+                                cornerRadius = CornerRadius(10.dp.value),
                             )
                         }
                     }
@@ -353,7 +353,7 @@ private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: (
                             modifier = Modifier.size(16.dp)
                         ) {
                             drawCircle(
-                                color = Color.White,  // Moving stroke color
+                                color = Color.White,
                                 radius = size.minDimension / 2f,
                                 style = Stroke(
                                     width = 7.dp.value,
@@ -362,8 +362,9 @@ private fun RecordButton(modifier: Modifier = Modifier, state: State, onClick: (
                         }
 
                         Text(
-                            modifier = Modifier.padding(start = 8.dp),
+                            modifier = Modifier.padding(start = 12.dp),
                             text = "Record",
+                            fontSize = 16.sp,
                             color = Color.White
                         )
                     }
