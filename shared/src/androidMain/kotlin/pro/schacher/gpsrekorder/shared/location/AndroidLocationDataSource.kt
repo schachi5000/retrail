@@ -5,16 +5,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.location.LocationListener
 import android.location.LocationManager
-import android.location.LocationProvider.AVAILABLE
 import android.location.provider.ProviderProperties
 import androidx.activity.ComponentActivity
 import co.touchlab.kermit.Logger
 import dev.icerock.moko.permissions.Permission
 import dev.icerock.moko.permissions.PermissionsController
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import pro.schacher.gpsrekorder.shared.AppLogger
@@ -22,8 +18,8 @@ import pro.schacher.gpsrekorder.shared.hasPermission
 import pro.schacher.gpsrekorder.shared.model.LatLng
 import pro.schacher.gpsrekorder.shared.model.Length
 import pro.schacher.gpsrekorder.shared.model.Location
-import pro.schacher.gpsrekorder.shared.model.Session
 import pro.schacher.gpsrekorder.shared.model.metersPerSecond
+import pro.schacher.gpsrekorder.shared.time.elapsedTimeSinceStart
 
 @SuppressLint("NewApi")
 class AndroidLocationDataSource(private val componentActivity: ComponentActivity) :
@@ -138,7 +134,7 @@ fun Location.toAndroidLocation(provider: String): AndroidLocation =
             it.longitude = this.latLng.longitude
             it.latitude = this.latLng.latitude
             it.time = Clock.System.now().toEpochMilliseconds()
-            it.elapsedRealtimeNanos = Clock.System.now().nanosecondsOfSecond.toLong()
+            it.elapsedRealtimeNanos = Clock.System.elapsedTimeSinceStart.inWholeNanoseconds
             it.accuracy = this.accuracy?.inMeters?.toFloat() ?: 0f
             it.bearing = this.heading?.toFloat() ?: 0f
             it.speed = this.speed?.metersPerSecond?.toFloat() ?: 0f
