@@ -41,18 +41,22 @@ class AndroidLocationDataSource(private val componentActivity: ComponentActivity
     init {
         this.permissionsController.bind(this.componentActivity)
 
-        this.locationManager.addTestProvider(
-            TEST_PROVIDER_NAME,
-            ProviderProperties.Builder()
-                .setHasAltitudeSupport(true)
-                .setHasSpeedSupport(true)
-                .setHasBearingSupport(true)
-                .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
-                .setAccuracy(ProviderProperties.ACCURACY_FINE)
-                .build()
-        )
+        try {
+            this.locationManager.addTestProvider(
+                TEST_PROVIDER_NAME,
+                ProviderProperties.Builder()
+                    .setHasAltitudeSupport(true)
+                    .setHasSpeedSupport(true)
+                    .setHasBearingSupport(true)
+                    .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
+                    .setAccuracy(ProviderProperties.ACCURACY_FINE)
+                    .build()
+            )
 
-        this.locationManager.setTestProviderEnabled(TEST_PROVIDER_NAME, true)
+            this.locationManager.setTestProviderEnabled(TEST_PROVIDER_NAME, true)
+        } catch (e: Exception) {
+            Logger.e(e) { "Failed to initialize test provider" }
+        }
     }
 
     override fun hasLocationPermission(): Boolean = runBlocking {
