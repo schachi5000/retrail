@@ -26,6 +26,7 @@ class AndroidLocationDataSource(private val componentActivity: ComponentActivity
     LocationDataSource(), LocationListener {
 
     private companion object {
+        const val TAG = "AndroidLocationDataSource"
         const val TEST_PROVIDER_NAME = LocationManager.GPS_PROVIDER
     }
 
@@ -55,7 +56,7 @@ class AndroidLocationDataSource(private val componentActivity: ComponentActivity
 
             this.locationManager.setTestProviderEnabled(TEST_PROVIDER_NAME, true)
         } catch (e: Exception) {
-            Logger.e(e) { "Failed to initialize test provider" }
+            Logger.e(e, TAG) { "Failed to initialize test provider" }
         }
     }
 
@@ -63,7 +64,7 @@ class AndroidLocationDataSource(private val componentActivity: ComponentActivity
         try {
             permissionsController.isPermissionGranted(Permission.LOCATION)
         } catch (e: Exception) {
-            Logger.e(e) { "Failed to check location permission" }
+            Logger.e(e, TAG) { "Failed to check location permission" }
             false
         }
     }
@@ -105,14 +106,14 @@ class AndroidLocationDataSource(private val componentActivity: ComponentActivity
     }
 
     override fun onLocationChanged(location: AndroidLocation) {
-        AppLogger.d("AndroidLocationDataSource") { "Location changed: $location" }
+        AppLogger.d(TAG) { "Location changed: $location" }
         _state.update {
             location.toLocation()
         }
     }
 
     override fun updateTestLocation(location: Location) {
-        AppLogger.d("AndroidLocationDataSource") { "Update test location: $location" }
+        AppLogger.d(TAG) { "Update test location: $location" }
         this.locationManager.setTestProviderEnabled(TEST_PROVIDER_NAME, true)
         this.locationManager.setTestProviderLocation(
             TEST_PROVIDER_NAME,
