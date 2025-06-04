@@ -28,14 +28,14 @@ kotlin {
         summary = "Some description for the Shared Module"
         homepage = "Link to the Shared Module homepage"
         version = "1.0"
-        ios.deploymentTarget = "16.0"
+        ios.deploymentTarget = "16.3"
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
             isStatic = true
         }
 
-        pod("MapLibre", "6.9.0")
+        pod("MapLibre", libs.versions.maplibre.ios.get())
     }
 
     sourceSets {
@@ -44,7 +44,6 @@ kotlin {
             api(compose.foundation)
             api(compose.material)
             implementation(compose.components.resources)
-            implementation(libs.maplibre.compose)
             implementation(libs.koin.core)
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.kermit)
@@ -52,9 +51,10 @@ kotlin {
             implementation(libs.kotlinx.serilization.json)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.viewmodel.compose)
-            implementation("dev.icerock.moko:geo:0.7.0")
+            implementation(libs.maplibre.compose)
+            implementation(libs.moko.geo)
             implementation(libs.sqldelight)
-            implementation("app.cash.sqldelight:coroutines-extensions:2.0.2")
+            implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

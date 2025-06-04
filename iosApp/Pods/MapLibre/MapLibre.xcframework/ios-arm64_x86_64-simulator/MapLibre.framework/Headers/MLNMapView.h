@@ -207,6 +207,18 @@ MLN_EXPORT
  */
 - (instancetype)initWithFrame:(CGRect)frame styleURL:(nullable NSURL *)styleURL;
 
+/**
+ * Initializes and returns a newly allocated map view with the specified frame
+ * and style JSON.
+ *
+ * @param frame The frame for the view, measured in points.
+ * @param styleJSON JSON string of the map style to display. The JSON must conform to the
+ *        <a href="https://maplibre.org/maplibre-style-spec/">MapLibre Style Specification</a>.
+ *        Specify `nil` for the default style.
+ * @return An initialized map view.
+ */
+- (instancetype)initWithFrame:(CGRect)frame styleJSON:(NSString *)styleJSON;
+
 // MARK: Accessing the Delegate
 
 /**
@@ -252,6 +264,20 @@ MLN_EXPORT
  - TODO: change the style of a map at runtime.
  */
 @property (nonatomic, null_resettable) NSURL *styleURL;
+
+/**
+ * The style JSON representation of the map.
+ *
+ * Setting this property results in an asynchronous style change. If you wish to know when the style
+ * change is complete, observe the ``MLNMapViewDelegate/mapView:didFinishLoadingStyle:`` method
+ * on ``MLNMapViewDelegate``.
+ *
+ * The JSON must conform to the
+ * <a href="https://maplibre.org/maplibre-style-spec/">MapLibre Style Specification</a>.
+ *
+ * @throws NSInvalidArgumentException if styleJSON is nil or invalid JSON
+ */
+@property (nonatomic, copy) NSString *styleJSON;
 
 /**
  Reloads the style.
@@ -548,8 +574,8 @@ MLN_EXPORT
  `-setUserLocationVerticalAlignment:animated:` method instead.
  */
 @property (nonatomic, assign) MLNAnnotationVerticalAlignment userLocationVerticalAlignment
-    __attribute__((deprecated("Use ``MLNMapViewDelegate/mapViewUserLocationAnchorPoint:`` instead.")
-                       ));
+    __attribute__((
+        deprecated("Use ``MLNMapViewDelegate/mapViewUserLocationAnchorPoint:`` instead.")));
 
 /**
  Sets the vertical alignment of the user location annotation within the
@@ -914,6 +940,13 @@ vertically on the map.
  * is 25.5.
  */
 @property (nonatomic) double maximumZoomLevel;
+
+/**
+ * The maximum bounds of the map that can be shown on screen.
+ *
+ * @param MLNCoordinateBounds the bounds to constrain the screen to.
+ */
+@property (nonatomic) MLNCoordinateBounds maximumScreenBounds;
 
 /**
  The heading of the map, measured in degrees clockwise from true north.
@@ -1303,19 +1336,18 @@ vertically on the map.
  the user find his or her bearings even after traversing a great distance.
 
  @param camera The new viewpoint.
+ @param insets The minimum padding (in screen points) that would be visible
+    around the returned camera object if it were set as the receiver's camera.
  @param duration The amount of time, measured in seconds, that the transition
     animation should take. Specify `0` to jump to the new viewpoint
     instantaneously. Specify a negative value to use the default duration, which
     is based on the length of the flight path.
- @param edgePadding The minimum padding (in screen points) that would be visible
- around the returned camera object if it were set as the receiver’s camera.
  @param completion The block to execute after the animation finishes.
  */
 - (void)flyToCamera:(MLNMapCamera *)camera
           edgePadding:(UIEdgeInsets)insets
          withDuration:(NSTimeInterval)duration
     completionHandler:(nullable void (^)(void))completion;
-
 /**
  Returns the camera that best fits the given coordinate bounds.
 
@@ -2114,7 +2146,13 @@ vertically on the map.
  */
 @property (nonatomic) MLNMapDebugMaskOptions debugMask;
 
-- (MLNBackendResource)backendResource;
+- (MLNBackendResource *)backendResource;
+
+/**
+ Triggers a repaint of the map.
+*/
+- (void)triggerRepaint;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -1,7 +1,7 @@
 PODS:
-  - MapLibre (6.9.0)
+  - MapLibre (6.14.0)
   - shared (1.0):
-    - MapLibre (= 6.9.0)
+    - MapLibre (= 6.14.0)
 
 DEPENDENCIES:
   - shared (from `../shared`)
@@ -15,9 +15,9 @@ EXTERNAL SOURCES:
     :path: "../shared"
 
 SPEC CHECKSUMS:
-  MapLibre: 9a09c08b1fe85223ead59ebfb494b79deefc296a
-  shared: 1ba9c298365e1f0ca6c9b3138b9478dd2de0d194
+  MapLibre: 69e572367f4ef6287e18246cfafc39c80cdcabcd
+  shared: 679b0415ac42951bada730f089122fe97c282da7
 
-PODFILE CHECKSUM: 78d6cc1b71b232202c48a29d4e6c34972c534c73
+PODFILE CHECKSUM: 15ed0b3ef87f2ff58406f86a6ef79a4000802135
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
