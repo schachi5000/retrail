@@ -8,6 +8,7 @@
 #import <MapLibre/MLNLineStyleLayer.h>
 #import <MapLibre/MLNRasterStyleLayer.h>
 #import <MapLibre/MLNSymbolStyleLayer.h>
+#import <MapLibre/MLNDefines.h>
 #import <MapLibre/MLNAnnotation.h>
 #import <MapLibre/MLNAttributedExpression.h>
 #import <MapLibre/MLNAttributionInfo.h>
@@ -51,6 +52,7 @@
 #import <MapLibre/MLNStyle.h>
 #import <MapLibre/MLNStyleLayer.h>
 #import <MapLibre/MLNStyleValue.h>
+#import <MapLibre/MLNTileOperation.h>
 #import <MapLibre/MLNTilePyramidOfflineRegion.h>
 #import <MapLibre/MLNTileServerOptions.h>
 #import <MapLibre/MLNTileSource.h>

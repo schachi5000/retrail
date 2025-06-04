@@ -8,8 +8,8 @@ Pod::Spec.new do |spec|
     spec.summary                  = 'Some description for the Shared Module'
     spec.vendored_frameworks      = 'build/cocoapods/framework/shared.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '16.0'
-    spec.dependency 'MapLibre', '6.9.0'
+    spec.ios.deployment_target    = '16.3'
+    spec.dependency 'MapLibre', '6.14.0'
                 
     if !Dir.exist?('build/cocoapods/framework/shared.framework') || Dir.empty?('build/cocoapods/framework/shared.framework')
         raise "
