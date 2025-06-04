@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build_ios:
     name: Build iOS
-    runs-on: macos-latest
+    runs-on: macbook-pro-i5
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -25,4 +25,4 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Build iOS
-        run: xcodebuild -allowProvisioningUpdates -workspace iosApp/iosApp.xcodeproj/project.xcworkspace -configuration Debug -scheme iosApp -sdk iphoneos -destination 'name=iPhone 14' build
+        run: xcodebuild -allowProvisioningUpdates -workspace iosApp/iosApp.xcworkspace -configuration Debug -scheme iosApp -sdk iphoneos -destination 'name=iPhone 14' build
