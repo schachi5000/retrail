@@ -14,6 +14,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "gps-rekorder"
+rootProject.name = "retrail"
 include(":androidApp")
 include(":shared")
